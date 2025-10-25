@@ -1,0 +1,7 @@
+package-lock.json
+plugins/test.js
+node_modules/
+config.env
+session/
+test.js
+*.test.js
