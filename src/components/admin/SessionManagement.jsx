@@ -83,9 +83,13 @@ const SessionManagement = ({ onStatsUpdate }) => {
 
   const downloadSessionArchive = async (sessionId) => {
     try {
+      console.log(`Starting download for session: ${sessionId}`);
       const response = await adminApi.downloadSessionArchive(sessionId);
+      
       if (response.ok) {
         const blob = await response.blob();
+        console.log(`Download successful, blob size: ${blob.size} bytes`);
+        
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -94,9 +98,23 @@ const SessionManagement = ({ onStatsUpdate }) => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        
         toast.success(`Session ${sessionId} files downloaded as ZIP`);
+        console.log(`Download completed for session: ${sessionId}`);
+        
+        // Refresh sessions list after a short delay to verify session still exists
+        setTimeout(() => {
+          fetchSessions();
+        }, 1000);
+        
       } else {
-        const errorData = await response.json();
+        console.error(`Download failed with status: ${response.status}`);
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        }
         toast.error(errorData.error || 'Failed to download session files');
       }
     } catch (error) {
