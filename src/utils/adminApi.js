@@ -124,7 +124,49 @@ export const adminApi = {
     }
   },
 
-  async downloadSessionCreds(sessionId) {
+  async getSessionFiles(sessionId) {
+    if (!sessionId || typeof sessionId !== 'string') {
+      throw new Error('Invalid session ID');
+    }
+    return await secureApiCall(`/api/admin/sessions/${encodeURIComponent(sessionId)}/files`);
+  },
+
+  async downloadSessionFile(sessionId, filename) {
+    if (!sessionId || typeof sessionId !== 'string') {
+      throw new Error('Invalid session ID');
+    }
+    if (!filename || typeof filename !== 'string') {
+      throw new Error('Invalid filename');
+    }
+    
+    try {
+      const headers = getAuthHeaders();
+      delete headers['Content-Type']; // Remove content-type for file downloads
+      
+      const response = await fetch(`${API_BASE_URL}/api/admin/sessions/${encodeURIComponent(sessionId)}/files/${encodeURIComponent(filename)}`, {
+        method: 'GET',
+        headers
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          secureStorage.clear();
+          window.location.href = '/?manji=admin';
+          throw new Error('Authentication expired');
+        }
+        if (response.status === 403) {
+          throw new Error('Access denied');
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return response;
+    } catch (error) {
+      throw new Error(secureErrorHandler(error, `Download Session File: ${sessionId}/${filename}`));
+    }
+  },
+
+  async downloadSessionArchive(sessionId) {
     if (!sessionId || typeof sessionId !== 'string') {
       throw new Error('Invalid session ID');
     }
@@ -152,7 +194,7 @@ export const adminApi = {
 
       return response;
     } catch (error) {
-      throw new Error(secureErrorHandler(error, `Download Session Creds: ${sessionId}`));
+      throw new Error(secureErrorHandler(error, `Download Session Archive: ${sessionId}`));
     }
   },
 

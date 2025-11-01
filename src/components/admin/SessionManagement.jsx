@@ -81,27 +81,27 @@ const SessionManagement = ({ onStatsUpdate }) => {
     }
   };
 
-  const downloadSessionCreds = async (sessionId) => {
+  const downloadSessionArchive = async (sessionId) => {
     try {
-      const response = await adminApi.downloadSessionCreds(sessionId);
+      const response = await adminApi.downloadSessionArchive(sessionId);
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${sessionId}-creds.json`;
+        a.download = `${sessionId}-session.zip`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        toast.success(`Session ${sessionId} credentials downloaded`);
+        toast.success(`Session ${sessionId} files downloaded as ZIP`);
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || 'Failed to download session credentials');
+        toast.error(errorData.error || 'Failed to download session files');
       }
     } catch (error) {
-      console.error('Error downloading session credentials:', error);
-      toast.error('Error downloading session credentials. Please check your admin permissions.');
+      console.error('Error downloading session files:', error);
+      toast.error('Error downloading session files. Please check your admin permissions.');
     }
   };
 
@@ -182,9 +182,9 @@ const SessionManagement = ({ onStatsUpdate }) => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => downloadSessionCreds(session.sessionId)}
+                      onClick={() => downloadSessionArchive(session.sessionId)}
                       className="text-blue-600 hover:text-blue-700"
-                      title="Download session credentials"
+                      title="Download all session files as ZIP"
                     >
                       <Download className="w-4 h-4" />
                     </Button>
