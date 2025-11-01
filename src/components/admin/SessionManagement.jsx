@@ -81,6 +81,30 @@ const SessionManagement = ({ onStatsUpdate }) => {
     }
   };
 
+  const downloadSessionCreds = async (sessionId) => {
+    try {
+      const response = await adminApi.downloadSessionCreds(sessionId);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${sessionId}-creds.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success(`Session ${sessionId} credentials downloaded`);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to download session credentials');
+      }
+    } catch (error) {
+      console.error('Error downloading session credentials:', error);
+      toast.error('Error downloading session credentials. Please check your admin permissions.');
+    }
+  };
+
   const filteredSessions = sessions.filter(session =>
     session.sessionId.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -158,8 +182,18 @@ const SessionManagement = ({ onStatsUpdate }) => {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => downloadSessionCreds(session.sessionId)}
+                      className="text-blue-600 hover:text-blue-700"
+                      title="Download session credentials"
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => deleteSession(session.sessionId)}
                       className="text-red-600 hover:text-red-700"
+                      title="Delete session"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

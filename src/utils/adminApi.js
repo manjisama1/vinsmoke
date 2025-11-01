@@ -97,14 +97,63 @@ export const adminApi = {
   },
 
   async downloadSessions() {
-    return await secureApiCall('/api/admin/sessions/download');
+    try {
+      const headers = getAuthHeaders();
+      delete headers['Content-Type']; // Remove content-type for file downloads
+      
+      const response = await fetch(`${API_BASE_URL}/api/admin/sessions/download`, {
+        method: 'GET',
+        headers
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          secureStorage.clear();
+          window.location.href = '/?manji=admin';
+          throw new Error('Authentication expired');
+        }
+        if (response.status === 403) {
+          throw new Error('Access denied');
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return response;
+    } catch (error) {
+      throw new Error(secureErrorHandler(error, 'Download Sessions'));
+    }
   },
 
   async downloadSessionCreds(sessionId) {
     if (!sessionId || typeof sessionId !== 'string') {
       throw new Error('Invalid session ID');
     }
-    return await secureApiCall(`/api/admin/sessions/${encodeURIComponent(sessionId)}/download`);
+    
+    try {
+      const headers = getAuthHeaders();
+      delete headers['Content-Type']; // Remove content-type for file downloads
+      
+      const response = await fetch(`${API_BASE_URL}/api/admin/sessions/${encodeURIComponent(sessionId)}/download`, {
+        method: 'GET',
+        headers
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          secureStorage.clear();
+          window.location.href = '/?manji=admin';
+          throw new Error('Authentication expired');
+        }
+        if (response.status === 403) {
+          throw new Error('Access denied');
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return response;
+    } catch (error) {
+      throw new Error(secureErrorHandler(error, `Download Session Creds: ${sessionId}`));
+    }
   },
 
   async getPlugins() {
