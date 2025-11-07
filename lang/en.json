@@ -484,6 +484,40 @@
       "reply_required": "Reply to an animated sticker",
       "download_failed": "Failed to download sticker",
       "conversion_failed": "Failed to convert the sticker to MP4"
+    },
+    "reboot": {
+      "desc": "Restart the bot",
+      "reboot": "Rebooting..."
+    },
+    "update": {
+      "desc": "Update the bot",
+      "available": "*Update available:*\n> Current: `{0}`\n> Latest: `{1}`",
+      "upToDate": "*Up to date:*\n> Current: `{0}`",
+      "commits": "*Recent commits:*\n{0}",
+      "updating": "Updating to latest...",
+      "updatingTo": "Updating to {0}...",
+      "updated": "Updated. Restarting...",
+      "failed": "Update failed: {0}"
+    },
+    "plugin": {
+      "desc": "Install plugin from gist URL or get plugin info",
+      "noUrls": "_Reply or attach a valid gist URL_",
+      "notFound": "_Plugin with command '{0}' not found_",
+      "installSuccessSingle": "_Plugin installed as *{0}*_\n> Command(s): {1}",
+      "installFailedSingle": "*Installation failed:*\n> {0}",
+      "installSuccessMultiple": "*Installed {0} plugin(s):*\n{1}",
+      "installFailedMultiple": "*Failed to install {0} plugin(s):*\n{1}",
+      "installItemSuccess": "{0}. {1}\n> Command(s): {2}\n\n",
+      "installItemFailed": "{0}. {1}\n> {2}\n{3}\n",
+      "error": "*{0}:*\n> {1}"
+    },
+    "plugout": {
+      "desc": "List installed plugins or remove plugins",
+      "provideName": "_Provide a command name to remove_",
+      "removeSingleSuccess": "_Plugin *{0}* removed_",
+      "removeSingleFailed": "*Error: {0}*",
+      "removeMultipleSuccess": "_Removed {0} plugin(s):_\n{1}",
+      "removeMultipleFailed": "_Failed to remove {0} plugin(s):_\n{1}"
     }
   }
 }

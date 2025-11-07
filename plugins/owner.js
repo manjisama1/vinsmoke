@@ -1,4 +1,4 @@
-import { Command, downLoad, lang, config } from '../lib/index.js';
+import { Command, downLoad, lang, config, cleanupTemp, getCurrentHash, getLatestHash, hasUpdates, getCommits, updateToCommit, } from '../lib/index.js';
 
 Command({
     pattern: 'var ?(.*)',
@@ -210,4 +210,69 @@ Command({
     await manji.ppUpdate({ jid, action: 'add', media });
     await message.send(lang.plugins.pp.updated);
 });
-  
+
+
+Command({
+    pattern: 'reboot',
+    desc: lang.plugins.desc,
+    type: 'owner',
+    sudo: true
+}, async (message, _, manji) => {
+    await manji.wait(2000);
+    await cleanupTemp();
+    await message.react('');
+    await message.send(lang.plugins.reboot.reboot,);
+    const { exec } = await import('child_process');
+    exec("npm restart", (error) => {
+        if (error) {
+            process.exit(0);
+        }
+    });
+});
+
+Command({
+    pattern: 'update ?(.*)',
+    desc: lang.plugins.update.desc,
+    type: 'owner',
+    sudo: true
+}, async (message, match) => {
+    try {
+        if (!match) {
+            const current = await getCurrentHash();
+            const available = await hasUpdates();
+
+            if (available) {
+                const latest = await getLatestHash();
+                await message.send(lang.plugins.update.available.format(current, latest));
+            } else {
+                await message.send(lang.plugins.update.upToDate.format(current));
+            }
+            return;
+        }
+
+        if (match.startsWith('list')) {
+            const parts = match.split(' ');
+            const count = parts[1] ? parseInt(parts[1]) : 15;
+            const commits = await getCommits(count);
+            const commitList = commits.map(c => `> ${c.date} - \`${c.hash}\``).join('\n');
+            await message.send(lang.plugins.update.commits.format(commitList));
+            return;
+        }
+
+        if (match === 'now') {
+            await message.send(lang.plugins.update.updating);
+            await updateToCommit();
+            await message.send(lang.plugins.update.updated);
+            process.exit(0);
+            return;
+        }
+
+        await message.send(lang.plugins.update.updatingTo.format(match));
+        await updateToCommit(match);
+        await message.send(lang.plugins.update.updated);
+        process.exit(0);
+
+    } catch (error) {
+        await message.send(lang.plugins.update.failed.format(error.message));
+    }
+});

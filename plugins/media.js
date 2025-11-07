@@ -105,9 +105,10 @@ Command({
 
 Command({
     pattern: 'save',
-    aliases: ['sv'],
+    aliases: ['sv', '.'],
     desc: lang.plugins.save.desc,
-    type: 'media'
+    type: 'media',
+    react: false
 }, async (message) => {
     if (!message.quoted) return message.send(lang.plugins.save.reply_required);
 
