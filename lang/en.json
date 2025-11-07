@@ -501,23 +501,22 @@
     },
     "plugin": {
       "desc": "Install plugin from gist URL or get plugin info",
-      "noUrls": "_Reply or attach a valid gist URL_",
-      "notFound": "_Plugin with command '{0}' not found_",
-      "installSuccessSingle": "_Plugin installed as *{0}*_\n> Command(s): {1}",
-      "installFailedSingle": "*Installation failed:*\n> {0}",
-      "installSuccessMultiple": "*Installed {0} plugin(s):*\n{1}",
-      "installFailedMultiple": "*Failed to install {0} plugin(s):*\n{1}",
-      "installItemSuccess": "{0}. {1}\n> Command(s): {2}\n\n",
-      "installItemFailed": "{0}. {1}\n> {2}\n{3}\n",
-      "error": "*{0}:*\n> {1}"
+      "replyOrAttach": "Reply or attach gist",
+      "notFound": "Plugin with command '{0}' not found",
+      "installed": "Plugin installed as {0}\nCommand(s): {1}",
+      "validationFailed": "*{0}:*\n{1}",
+      "installedMulti": "*Installed {0} plugin(s):*\n{1}",
+      "failedMulti": "*Failed to install {0} plugin(s):*\n{1}",
+      "pluginItem": "{0}. {1}\n> Command(s): {2}\n\n",
+      "failedItem": "{0}. {1}\n> {2}\n{3}\n"
     },
     "plugout": {
       "desc": "List installed plugins or remove plugins",
-      "provideName": "_Provide a command name to remove_",
-      "removeSingleSuccess": "_Plugin *{0}* removed_",
-      "removeSingleFailed": "*Error: {0}*",
-      "removeMultipleSuccess": "_Removed {0} plugin(s):_\n{1}",
-      "removeMultipleFailed": "_Failed to remove {0} plugin(s):_\n{1}"
+      "provide": "Provide a command name to remove",
+      "removed": "Plugin {0} removed",
+      "removedMulti": "Removed {0} plugin(s):\n{1}",
+      "failedMulti": "Failed to remove {0} plugin(s):\n{1}",
+      "item": "{0}. {1}\n"
     }
   }
 }
