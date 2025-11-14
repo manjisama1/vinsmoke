@@ -1,6 +1,6 @@
 <div align="center">
 
-![VINSMOKE](media/assets/vinsmoke.png)
+<img src="media/assets/vinsmoke.png" alt="VINSMOKE" width="300" height="auto">
 
 # VINSMOKE - WhatsApp Bot
 
