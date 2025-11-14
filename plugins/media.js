@@ -130,7 +130,7 @@ Command({
     type: 'media'
 }, async (message) => {
     try {
-        if (!message.quoted.sticker || message.quoted.sticker.isAnimated) return message.send(lang.plugins.toimg.reply_required);
+        if (!message.quoted?.sticker || message.quoted.sticker.animated) return message.send(lang.plugins.toimg.reply_required);
 
         const buffer = await downLoad(message.quoted, 'buffer');
         if (!buffer) return message.send(lang.plugins.toimg.download_failed);
@@ -149,7 +149,7 @@ Command({
     type: 'media'
 }, async (message) => {
     try {
-        if (!message.quoted?.sticker || !message.quoted.sticker.isAnimated) 
+        if (!message.quoted?.sticker || !message.quoted.sticker.animated) 
             return message.send(lang.plugins.tomp4.reply_required);
 
         const stickerPath = await downLoad(message.quoted, 'path');

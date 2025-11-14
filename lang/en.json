@@ -242,6 +242,17 @@
     "jid": {
       "desc": "Get JID of a person or current chat"
     },
+    "lid": {
+      "desc": "Get LID of a person or current chat",
+      "nouser": "No users found"
+    },
+    "num": {
+      "desc": "Get phone number with + prefix",
+      "nouser": "No users found"
+    },
+    "linkjid": {
+      "desc": "Get the JID of a group from invite link"
+    },
     "star": {
       "desc": "Star a replied message",
       "noQuoted": "_Reply to a message to star it._",
@@ -517,6 +528,58 @@
       "removedMulti": "Removed {0} plugin(s):\n{1}",
       "failedMulti": "Failed to remove {0} plugin(s):\n{1}",
       "item": "{0}. {1}\n"
+    },
+    "bass": {
+      "desc": "Bass boost effect",
+      "reply_required": "_Reply to an audio_"
+    },
+    "deep": {
+      "desc": "Deep voice effect",
+      "reply_required": "_Reply to an audio_"
+    },
+    "slow": {
+      "desc": "Slow down audio",
+      "reply_required": "_Reply to an audio_"
+    },
+    "fast": {
+      "desc": "Speed up audio",
+      "reply_required": "_Reply to an audio_"
+    },
+    "reverse": {
+      "desc": "Reverse audio",
+      "reply_required": "_Reply to an audio_"
+    },
+    "chipmunk": {
+      "desc": "Chipmunk voice effect",
+      "reply_required": "_Reply to an audio_"
+    },
+    "echo": {
+      "desc": "Echo effect",
+      "reply_required": "_Reply to an audio_"
+    },
+    "robot": {
+      "desc": "Robot voice effect",
+      "reply_required": "_Reply to an audio_"
+    },
+    "nightcore": {
+      "desc": "Nightcore effect",
+      "reply_required": "_Reply to an audio_"
+    },
+    "earrape": {
+      "desc": "Earrape effect",
+      "reply_required": "_Reply to an audio_"
+    },
+    "tremolo": {
+      "desc": "Tremolo effect",
+      "reply_required": "_Reply to an audio_"
+    },
+    "underwater": {
+      "desc": "Underwater effect",
+      "reply_required": "_Reply to an audio_"
+    },
+    "tovn": {
+      "desc": "Convert audio to voice note",
+      "reply_required": "_Reply to an audio_"
     }
   }
 }

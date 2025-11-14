@@ -6,7 +6,7 @@ Command({
     type: 'group',
     group: true,
 }, async (message, match, manji) => {
-    const users = manji.getUserJid(message, match);
+    const users = await manji.getUserJid(message, match);
     if (!users.length) return message.send(lang.plugins.promote.noUser);
 
     if (!(await manji.isAdmin(message.chat, message.sender)) && !message.isSudo)
@@ -42,7 +42,7 @@ Command({
     type: 'group',
     group: true,
 }, async (message, match, manji) => {
-    const users = manji.getUserJid(message, match);
+    const users = await manji.getUserJid(message, match);
     if (!users.length) return message.send(lang.plugins.demote.noUser);
 
     if (!(await manji.isAdmin(message.chat, message.sender)) && !message.isSudo)
@@ -91,7 +91,7 @@ Command({
     type: 'group',
     group: true,
 }, async (message, match, manji) => {
-    const users = manji.getUserJid(message, match);
+    const users = await manji.getUserJid(message, match);
     if (!users.length) return message.send(lang.plugins.kick.noUser);
 
     if (!(await manji.isAdmin(message.chat, message.sender)) && !message.isSudo) {
@@ -134,7 +134,7 @@ Command({
     type: 'group',
     group: true,
 }, async (message, match, manji) => {
-    const users = manji.getUserJid(message, match);
+    const users = await manji.getUserJid(message, match);
     if (!users.length) return message.send(lang.plugins.add.noUser);
 
     if (!(await manji.isAdmin(message.chat, message.sender)) && !message.isSudo) {

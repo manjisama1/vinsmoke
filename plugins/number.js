@@ -8,28 +8,50 @@ Command({
     type: 'tools',
 }, async (message, match, manji) => {
     const jids = await manji.getUserJid(message, match);
-    if (jids == ""){
-        return message.send(message.chat);
-    } else {
-        return message.send(Array.isArray(jids) ? jids.join('\n') : jids);
+    return message.send(jids.length ? jids.join('\n') : message.chat);
+});
+
+Command({
+    pattern: 'lid ?(.*)',
+    desc: lang.plugins.lid.desc,
+    type: 'tools',
+}, async (message, match, manji) => {
+    const jids = await manji.getUserJid(message, match);
+    if (!jids.length) return message.send(lang.plugins.lid.nouser);
+
+    const lidJids = [];
+    for (const jid of jids) {
+        if (jid.includes('@s.whatsapp.net')) {
+            const phoneNumber = jid.split('@')[0];
+            const lid = await manji.pn2lid(phoneNumber);
+            lidJids.push(lid || jid);
+        } else {
+            lidJids.push(jid);
+        }
     }
+
+    return message.send(lidJids.join('\n'));
 });
 
 Command({
     pattern: 'num ?(.*)',
-    desc: 'Get number with +',
+    desc: lang.plugins.num.desc,
     type: 'tools',
 }, async (message, match, manji) => {
     const jids = await manji.getUserJid(message, match);
-    const numbers = Array.isArray(jids)
-        ? jids.map(j => '+' + j.split('@')[0])
-        : ['+' + jids.split('@')[0]];
+    if (!jids.length) return message.send(lang.plugins.num.nouser);
+
+    const numbers = jids.map(jid => {
+        const phoneNumber = jid.split('@')[0];
+        return `+${phoneNumber}`;
+    });
+
     return message.send(numbers.join('\n'));
 });
 
 Command({
     pattern: 'linkjid ?(.*)',
-    desc: 'Get the jid of a group from invite link',
+    desc: lang.plugins.linkjid.desc,
     type: 'tools',
 }, async (message, match, manji) => {
     const response = await manji.gInfoCode(match || message.quoted.text);
@@ -41,7 +63,7 @@ Command({
 
 Command({
     pattern: "onwa ?(.*)",
-    desc: "Check WhatsApp numbers",
+    desc: lang.plugins.onwa.desc,
     type: "tools",
 }, async (msg, match, manji) => {
     if (!match) return msg.send(lang.plugins.onwa.usage.format(config.PREFIX));

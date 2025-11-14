@@ -1,4 +1,4 @@
-import { Command, downLoad, lang, config, cleanupTemp, getCurrentHash, getLatestHash, hasUpdates, getCommits, updateToCommit, } from '../lib/index.js';
+import { Command, downLoad, lang, config, cleanupTemp, getCurrentHash, getLatestHash, hasUpdates, getCommits, updateToCommit, reloadEnv } from '../lib/index.js';
 
 Command({
     pattern: 'var ?(.*)',
@@ -10,14 +10,7 @@ Command({
     const args = match?.trim()?.split(' ') || [];
     const action = args[0]?.toLowerCase();
 
-    const updateRuntime = (key) => {
-        const value = manji.envGet(key);
-        if (value && value !== 'null') {
-            manji.envSet(key, value);
-        } else {
-            manji.envDelete(key); 
-        }
-    };
+    // No need for updateRuntime anymore - the new methods handle it automatically
 
 
     switch (action) {
@@ -39,7 +32,6 @@ Command({
 
             const success = manji.envSet(key, value);
             if (success) {
-                updateRuntime(key);
                 return await message.send(lang.plugins.var.set.success.format(key.toUpperCase(), value));
             }
             return await message.send(lang.plugins.var.set.failed.generic);
@@ -57,7 +49,6 @@ Command({
 
             const success = manji.envDelete(key);
             if (success) {
-                delete manji.config[key];
                 return await message.send(lang.plugins.var.del.success.format(key));
             }
             return await message.send(lang.plugins.var.set.failed.generic);
@@ -78,7 +69,6 @@ Command({
 
             const success = manji.envAdd(key, value);
             if (success) {
-                updateRuntime(key);
                 return await message.send(lang.plugins.var.add.success.format(key.toUpperCase()));
             }
             return await message.send(lang.plugins.var.set.failed.generic);
@@ -156,9 +146,9 @@ Command({
         else notFound.push(phone);
     }
 
-    if (removed.length) 
+    if (removed.length)
         await message.send(lang.plugins.delsudo.removed.format(removed.join(', ')));
-    if (notFound.length) 
+    if (notFound.length)
         await message.send(lang.plugins.delsudo.notFound.format(notFound.join(', ')));
 });
 
@@ -174,7 +164,7 @@ Command({
     await manji.userName(name);
     await message.send(lang.plugins.username.updated.format(name));
 });
-  
+
 Command({
     pattern: 'userbio ?(.*)',
     desc: lang.plugins.userbio.desc,
@@ -195,18 +185,18 @@ Command({
 }, async (message, match, manji) => {
     const jid = message.botJid;
     const arg = (match || '').trim().toLowerCase();
-  
+
     if (arg === 'remove') {
-      await manji.ppUpdate({ jid, action: 'remove' });
-      return message.send(lang.plugins.pp.removed);
+        await manji.ppUpdate({ jid, action: 'remove' });
+        return message.send(lang.plugins.pp.removed);
     }
-  
+
     const image = message.image || message.quoted?.image;
     if (!image) return message.send(lang.plugins.pp.noMedia);
-  
+
     const media = await downLoad(message.raw, 'buffer');
     if (!media) return message.send(lang.plugins.pp.downloadFail);
-  
+
     await manji.ppUpdate({ jid, action: 'add', media });
     await message.send(lang.plugins.pp.updated);
 });

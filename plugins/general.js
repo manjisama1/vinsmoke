@@ -1,4 +1,4 @@
-import { Command, lang } from '../lib/index.js';
+import { Command, lang, reloadEnv } from '../lib/index.js';
 
 
 
@@ -79,6 +79,5 @@ Command({
     }
     
     manji.envSet('BOT_MODE', mode);
-    manji.config.BOT_MODE = mode;
     await message.send(lang.plugins.mode.status.format(mode));
 });
