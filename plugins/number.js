@@ -16,21 +16,8 @@ Command({
     desc: lang.plugins.lid.desc,
     type: 'tools',
 }, async (message, match, manji) => {
-    const jids = await manji.getUserJid(message, match);
-    if (!jids.length) return message.send(lang.plugins.lid.nouser);
-
-    const lidJids = [];
-    for (const jid of jids) {
-        if (jid.includes('@s.whatsapp.net')) {
-            const phoneNumber = jid.split('@')[0];
-            const lid = await manji.pn2lid(phoneNumber);
-            lidJids.push(lid || jid);
-        } else {
-            lidJids.push(jid);
-        }
-    }
-
-    return message.send(lidJids.join('\n'));
+    const lids = await manji.getUserLid(message, match);
+    return message.send(lids.length ? lids.join('\n') : lang.plugins.lid.nouser);
 });
 
 Command({

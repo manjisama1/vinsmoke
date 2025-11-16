@@ -1,4 +1,4 @@
-import { Command, sticker, cropImage, roundedCrop, circleCrop, tempDir, pinterest, lang } from '../lib/index.js';
+import { Command, sticker, cropImage, roundedCrop, circleCrop, tempDir, pinterest, lang, config } from '../lib/index.js';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
@@ -11,6 +11,8 @@ dotenv.config({ path: path.join(__dirname, '..', 'config.env') });
 
 const settingsPath = path.join(__dirname, '..', 'db', 'sticker.json');
 const safeDelete = file => fs.existsSync(file) && fs.unlinkSync(file);
+
+const activeProcesses = new Map();
 
 const ensureConfig = () => {
     if (!fs.existsSync(settingsPath)) {
@@ -25,14 +27,25 @@ Command({
     aliases: ['pt'],
     desc: lang.plugins.pinterest.desc,
     type: 'media',
-}, async (message, match) => {
+}, async (message, match, manji) => {
     if (!match?.trim()) {
-        return message.send(lang.plugins.pinterest.usage);
+        const prefix = manji.config?.PREFIX || message.config?.PREFIX || config?.PREFIX || '.';
+        return message.send(lang.plugins.pinterest.usage.format(prefix));
     }
 
     const parts = match.trim().split(/\s+/);
-    const type = parts[0]?.toLowerCase();
+    const command = parts[0]?.toLowerCase();
 
+    if (command === 'stop') {
+        const processId = message.chat;
+        if (activeProcesses.has(processId)) {
+            activeProcesses.get(processId).stopped = true;
+            return message.send(lang.plugins.pinterest.stopped);
+        }
+        return message.send(lang.plugins.pinterest.no_active_process);
+    }
+
+    const type = command;
     if (!['i', 's'].includes(type)) {
         return message.send(lang.plugins.pinterest.invalid_mode);
     }
@@ -49,7 +62,7 @@ Command({
     }
 
     if (!query) {
-        return message.send(lang.plugins.pinterest.no_query);
+        return message.send(lang.plugins.pinterest.no_query.format(manji.config.PREFIX));
     }
 
     const pinApi = process.env.PIN_API || 'http://localhost:3000/scrape';
@@ -84,51 +97,67 @@ Command({
     const source = usingApi ? 'API' : 'Backup';
     const mediaType = type === 'i' ? 'images' : 'stickers';
 
+    const processId = message.chat;
+    const processInfo = { stopped: false, tempFiles: [] };
+    activeProcesses.set(processId, processInfo);
+
     await message.send(lang.plugins.pinterest.searching.format(results.length, source, finalCount, mediaType, query));
 
     const { ratio, placement, type: shape } = ensureConfig();
 
-    for (const url of results.slice(0, finalCount)) {
-        const tempFiles = [];
+    try {
+        for (let i = 0; i < results.slice(0, finalCount).length; i++) {
+            if (activeProcesses.get(processId)?.stopped) break;
 
-        try {
-            const imgBuffer = Buffer.from((await axios.get(url, { responseType: 'arraybuffer' })).data);
-            const tempFile = path.join(tempDir, `pinterest_${Date.now()}.jpg`);
-            fs.writeFileSync(tempFile, imgBuffer);
-            tempFiles.push(tempFile);
+            const url = results[i];
+            const tempFiles = [];
 
-            if (type === 's') {
-                let processedFile = tempFile;
+            try {
+                const imgBuffer = Buffer.from((await axios.get(url, { responseType: 'arraybuffer' })).data);
+                const tempFile = path.join(tempDir, `pinterest_${Date.now()}.jpg`);
+                fs.writeFileSync(tempFile, imgBuffer);
+                tempFiles.push(tempFile);
 
-                if (ratio !== '0') {
-                    processedFile = await cropImage(tempFile, ratio, parseInt(placement) || 1);
-                    tempFiles.push(processedFile);
-                }
+                if (type === 's') {
+                    let processedFile = tempFile;
 
-                if (shape && shape !== '0') {
-                    let shapedFile;
-                    if (shape === 'circle') {
-                        shapedFile = await circleCrop(processedFile);
-                    } else if (shape === 'rounded') {
-                        shapedFile = await roundedCrop(processedFile, 80);
+                    if (ratio !== '0') {
+                        processedFile = await cropImage(tempFile, ratio, parseInt(placement) || 1);
+                        tempFiles.push(processedFile);
                     }
 
-                    if (shapedFile) {
-                        tempFiles.push(shapedFile);
-                        processedFile = shapedFile;
-                    }
-                }
+                    if (shape && shape !== '0') {
+                        let shapedFile;
+                        if (shape === 'circle') {
+                            shapedFile = await circleCrop(processedFile);
+                        } else if (shape === 'rounded') {
+                            shapedFile = await roundedCrop(processedFile, 80);
+                        }
 
-                const stickerBuffer = await sticker(processedFile);
-                if (stickerBuffer) await message.send({ sticker: stickerBuffer });
-            } else {
-                await message.send(imgBuffer);
+                        if (shapedFile) {
+                            tempFiles.push(shapedFile);
+                            processedFile = shapedFile;
+                        }
+                    }
+
+                    if (activeProcesses.get(processId)?.stopped) break;
+
+                    const stickerBuffer = await sticker(processedFile);
+                    if (activeProcesses.get(processId)?.stopped) break;
+
+                    if (stickerBuffer) await message.send({ sticker: stickerBuffer });
+                } else {
+                    if (activeProcesses.get(processId)?.stopped) break;
+                    await message.send(imgBuffer);
+                }
+            } catch (err) {
+                console.error('Pinterest processing error:', err.message);
+            } finally {
+                tempFiles.forEach(safeDelete);
             }
-        } catch (err) {
-            console.error('Pinterest processing error:', err.message);
-        } finally {
-            tempFiles.forEach(safeDelete);
         }
+    } finally {
+        activeProcesses.delete(processId);
     }
 });
 

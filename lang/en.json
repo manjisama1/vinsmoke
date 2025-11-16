@@ -458,12 +458,14 @@
     },
     "pinterest": {
       "desc": "Download Pinterest images or stickers",
-      "usage": "Usage:\n.pt i 5 cat → images\n.pt s 50 anime → stickers\n.pt s anime → default count",
-      "invalid_mode": "Invalid mode. Use \"i\" for images or \"s\" for stickers",
-      "no_query": "Please provide a search query. Example: .pt s 10 luffy",
+      "usage": "Usage:\n> {0}pt i 5 cat → images\n> {0}pt s 50 anime → stickers\n> {0}pt s anime → default count\n> {0}pt stop → stop current process",
+      "invalid_mode": "Invalid mode.\n> Use \"i\" for images,\"s\" for stickers, or \"stop\" to halt process",
+      "no_query": "Please provide a search query. \n> Example: {0}pt s 10 luffy",
       "searching": "Found {0} results via {1}.\n> Sending {2} {3} for *{4}*",
       "no_results": "No results found",
-      "failed": "Failed to fetch images"
+      "failed": "Failed to fetch images",
+      "stopped": "Pinterest process stopped",
+      "no_active_process": "No active Pinterest process to stop"
     },
     "ssize": {
       "desc": "View or update sticker crop/type settings",

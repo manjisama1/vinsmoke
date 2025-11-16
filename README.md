@@ -191,6 +191,13 @@ https://vinsmoke-ten.vercel.app/faq
 - **Support**: https://vinsmoke-ten.vercel.app/support
 - **GitHub Issues**: https://github.com/manjisama1/vinsmoke/issues
 
+## Credits
+
+Special thanks to:
+- **[Baileys](https://github.com/WhiskeySockets/Baileys)** - The amazing WhatsApp Web API library that powers this bot
+- **[WhiskeySockets](https://github.com/WhiskeySockets)** - For maintaining and developing Baileys
+- All contributors and the open-source community
+
 ## License
 
 This project is licensed under the MIT License.
