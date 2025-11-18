@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const mediaDir = path.join(__dirname, '..', 'media');
-const queueFile = path.join(mediaDir, 'pin.txt');
+const queueFile = path.join(mediaDir, 'pin.json');
 const settingsPath = path.join(__dirname, '..', 'db', 'sticker.json');
 const activeProcesses = new Map();
 
