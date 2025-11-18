@@ -1,4 +1,4 @@
-import { Command, lang, reloadEnv } from '../lib/index.js';
+import { Command, lang } from '../lib/index.js';
 
 
 
@@ -47,7 +47,17 @@ Command({
     const heapTotal = (memUsage.heapTotal / 1024 / 1024).toFixed(2);
     const external = (memUsage.external / 1024 / 1024).toFixed(2);
 
-    const platform = process.platform;
+    const platformNames = {
+        win32: 'Windows',
+        darwin: 'macOS',
+        linux: 'Linux',
+        android: 'Android',
+        freebsd: 'FreeBSD',
+        openbsd: 'OpenBSD',
+        sunos: 'SunOS',
+        aix: 'AIX'
+    };
+    const platform = platformNames[process.platform] || process.platform;
     const nodeVersion = process.version;
     const pid = process.pid;
     const connection = 'Connected';
