@@ -10,9 +10,6 @@ Command({
     const args = match?.trim()?.split(' ') || [];
     const action = args[0]?.toLowerCase();
 
-    // No need for updateRuntime anymore - the new methods handle it automatically
-
-
     switch (action) {
         case undefined: {
             return await message.send(lang.plugins.var.usage.format(prefix));
@@ -72,6 +69,42 @@ Command({
                 return await message.send(lang.plugins.var.add.success.format(key.toUpperCase()));
             }
             return await message.send(lang.plugins.var.set.failed.generic);
+        }
+
+        case 'edit': {
+            const input = args.slice(1).join(' ');
+            if (!input || !input.includes('=')) {
+                return await message.send(lang.plugins.var.edit.usage.format(prefix));
+            }
+
+            const [rawKey, ...valParts] = input.split('=');
+            const key = rawKey.trim().toUpperCase();
+            const value = valParts.join('=').trim();
+
+            if (!key) return await message.send(lang.plugins.var.set.failed.emptyKey);
+
+            const allVars = manji.envAll();
+            if (!allVars[key]) {
+                return await message.send(lang.plugins.var.edit.notFound.format(key));
+            }
+
+            const success = manji.envSet(key, value);
+            if (success) {
+                return await message.send(lang.plugins.var.edit.success.format(key, value));
+            }
+            return await message.send(lang.plugins.var.set.failed.generic);
+        }
+
+        case 'see': {
+            const key = args[1]?.toUpperCase();
+            if (!key) return await message.send(lang.plugins.var.see.usage.format(prefix));
+
+            const allVars = manji.envAll();
+            if (!allVars[key]) {
+                return await message.send(lang.plugins.var.see.notFound.format(key));
+            }
+
+            return await message.send(lang.plugins.var.see.value.format(key, allVars[key]));
         }
 
         case 'help': {

@@ -44,7 +44,17 @@
           "generic": "_Unable to add variable_"
         }
       },
-      "help": "*Usage:*\n\n_{0}var set KEY=VALUE - Set variable_\n_{0}var all - Get all variables_\n_{0}var del KEY - Delete variable_\n_{0}var add KEY=VALUE - Add variable_"
+      "edit": {
+        "usage": "_Usage: {0}var edit KEY=VALUE_",
+        "success": "Variable {0} updated to-\n> `{1}`",
+        "notFound": "_Variable {0} not found_"
+      },
+      "see": {
+        "usage": "_Usage: {0}var see KEY_",
+        "value": "*{0}:*\n> `{1}`",
+        "notFound": "_Variable {0} not found_"
+      },
+      "help": "*Usage:*\n\n_{0}var set KEY=VALUE - Set variable_\n_{0}var all - Get all variables_\n_{0}var del KEY - Delete variable_\n_{0}var add KEY=VALUE - Add variable_\n_{0}var edit KEY=VALUE - Edit existing variable_\n_{0}var see KEY - View variable value_"
     },
     "setsudo": {
       "desc": "Add sudo users to the bot",
@@ -229,10 +239,9 @@
       "desc": "Convert an image or video into a sticker",
       "reply_required": "_Reply to a media_"
     },
-    "take": {
-      "desc": "Take a sticker and optionally set pack and author",
-      "reply_required": "_Reply to a sticker_",
-      "example": "_Usage: .take packName, authorName_"
+    "steal": {
+      "desc": "Steal a sticker and optionally set pack and author",
+      "reply_required": "_Reply to a sticker_"
     },
     "exif": {
       "desc": "Get EXIF information from a sticker",
@@ -592,6 +601,19 @@
     "tovn": {
       "desc": "Convert audio to voice note",
       "reply_required": "_Reply to an audio_"
+    },
+    "crop": {
+      "desc": "Crop video or image to desired dimensions",
+      "reply_required": "Reply to video or image",
+      "failed_info": "Failed to get info",
+      "failed_download": "Failed to download",
+      "failed": "Crop failed"
+    },
+    "resize": {
+      "desc": "Resize video or image",
+      "reply_required": "Reply to video or image",
+      "usage": "Usage: .resize -50% | +20% | x512 | 512x | 720x512",
+      "failed": "Resize failed"
     }
   }
 }

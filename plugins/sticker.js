@@ -1,36 +1,35 @@
 import {
     Command,
     sticker,
-    cropImage,
-    circleCrop,
-    roundedCrop,
-    tempDir,
-    pinterest,
+    cropSticker,
     addExif,
     exif,
     tgStk,
-    lang,
-    downLoad
+    lang
 } from '../lib/index.js';
 import fs from 'fs';
-import path from 'path';
-import axios from 'axios';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(__dirname, '..', 'config.env') });
+const st = { chats: new Set(), q: [], tid: null, proc: false };
 
-const settingsPath = path.join(__dirname, '..', 'db', 'sticker.json');
-const del = f => fs.existsSync(f) && fs.unlinkSync(f);
-
-const getSettings = () => {
-    if (!fs.existsSync(settingsPath))
-        fs.writeFileSync(settingsPath, JSON.stringify({ settings: { ratio: '1:1', placement: 1, type: '0' } }, null, 2));
-    return JSON.parse(fs.readFileSync(settingsPath)).settings;
+const proc = async () => {
+    if (st.proc || !st.q.length) return;
+    st.proc = true;
+    try {
+        while (st.q.length) {
+            const { raw, msg } = st.q.shift();
+            const buf = await sticker(raw).catch(() => null);
+            if (buf) {
+                for (const chat of st.chats) {
+                    await msg.send({ sticker: buf }, {}, chat).catch(() => {});
+                }
+            }
+        }
+    } finally {
+        st.proc = false;
+    }
 };
 
+const name = (id) => id.endsWith('@g.us') ? lang.plugins.asteal.group : id.split('@')[0];
 
 
 Command({
@@ -49,9 +48,9 @@ Command({
 });
 
 Command({
-    pattern: 'take ?(.*)',
-    aliases: ['t'],
-    desc: lang.plugins.take.desc,
+    pattern: 'steal ?(.*)',
+    aliases: ['t', 'take'],
+    desc: lang.plugins.steal.desc,
     type: 'sticker',
 }, async (message, match) => {
     let pack, author;
@@ -68,11 +67,63 @@ Command({
     const stickerBuffer = await sticker(message.raw, pack, author);
 
     if (!stickerBuffer) {
-        return await message.send(lang.plugins.take.reply_required);
+        return await message.send(lang.plugins.steal.reply_required);
     }
 
     await message.send({ sticker: stickerBuffer });
 });
+
+
+Command({
+    pattern: 'asteal ?(.*)',
+    aliases: ['atake'],
+    desc: lang.plugins.asteal.desc,
+    type: 'sticker',
+}, async (message, match) => {
+    const [act, tgt] = (match || '').trim().split(/\s+/);
+    const chat = tgt || message.chat;
+
+    switch (act?.toLowerCase()) {
+        case 'on':
+            st.chats.add(chat);
+            if (!st.tid) {
+                st.tid = Tracker.register(
+                    (msg) => msg.media?.type === 'sticker' && !msg.fromMe && !st.chats.has(msg.chat),
+                    async (msg) => {
+                        st.q.push({ raw: msg.raw, msg });
+                        await proc();
+                    },
+                    { name: 'StickerSteal' }
+                );
+            }
+            return message.send(lang.plugins.asteal.on.format(name(chat)));
+
+        case 'off':
+            st.chats.delete(chat);
+            if (!st.chats.size && st.tid) {
+                Tracker.unregister(st.tid);
+                st.tid = null;
+            }
+            return message.send(lang.plugins.asteal.off.format(name(chat)));
+
+        case 'status':
+            const list = [...st.chats].map(name).join(', ') || lang.plugins.asteal.none;
+            return message.send(lang.plugins.asteal.status.format(st.chats.size, st.q.length, list));
+
+        case 'clear':
+            st.chats.clear();
+            st.q = [];
+            if (st.tid) {
+                Tracker.unregister(st.tid);
+                st.tid = null;
+            }
+            return message.send(lang.plugins.asteal.cleared);
+
+        default:
+            return message.send(lang.plugins.asteal.usage.format(config.PREFIX));
+    }
+});
+
 
 Command({
     pattern: 'exif',
@@ -131,38 +182,14 @@ Command({
     desc: lang.plugins.cs.desc,
     type: 'sticker'
 }, async (message) => {
-    const temp = [];
     try {
-        const media = await downLoad(message.raw, 'path');
-        if (!media) return message.send(lang.plugins.cs.reply_required);
-        temp.push(media);
+        const stickerBuffer = await cropSticker(message.raw);
 
-        const { ratio, placement, type } = getSettings();
-        let processed = media;
+        if (!stickerBuffer) return message.send(lang.plugins.cs.reply_required);
 
-        if (ratio !== '0') {
-            processed = await cropImage(media, ratio, parseInt(placement) || 1);
-            temp.push(processed);
-        }
-
-        if (type && type !== '0') {
-            let shaped;
-            if (type === 'circle') shaped = await circleCrop(processed);
-            else if (type === 'rounded') shaped = await roundedCrop(processed, 80);
-            if (shaped) {
-                temp.push(shaped);
-                if (shaped !== processed) processed = shaped;
-            }
-        }
-
-        const stk = await sticker(processed);
-        if (!stk) return message.send(lang.plugins.cs.failed);
-        await message.send({ sticker: stk });
-
+        await message.send({ sticker: stickerBuffer });
     } catch (err) {
         console.error('CS error:', err);
         await message.send(lang.plugins.cs.error);
-    } finally {
-        temp.forEach(del);
     }
 });

@@ -1,4 +1,4 @@
-import { Command, lang, spotifyDl, instaDl, downLoad, webpToImage, webpToMp4 } from '../lib/index.js';
+import { Command, lang, spotifyDl, instaDl, downLoad, webpToImage, webpToMp4, cropVideo, cropImage, videoMeta, resizeMedia } from '../lib/index.js';
 import fs from 'fs';
 import axios from 'axios';
 
@@ -7,6 +7,7 @@ Command({
     aliases: ['sp', 'song'],
     desc: lang.plugins.spotify.desc,
     type: 'media',
+
 }, async (message, match) => {
     const url =
         match?.trim() ||
@@ -51,6 +52,7 @@ Command({
     aliases: ['ig', 'insta'],
     desc: lang.plugins.instagram.desc,
     type: 'media',
+
 }, async (message, match) => {
     const url =
         match?.trim() ||
@@ -87,6 +89,7 @@ Command({
     aliases: ['vv'],
     desc: lang.plugins.view.desc,
     type: 'media'
+
 }, async (message) => {
     if (!message.quoted?.viewOnce)
         return message.send(lang.plugins.view.reply_vv);
@@ -109,6 +112,7 @@ Command({
     desc: lang.plugins.save.desc,
     type: 'media',
     react: false
+
 }, async (message) => {
     if (!message.quoted) return message.send(lang.plugins.save.reply_required);
 
@@ -128,6 +132,7 @@ Command({
     pattern: 'toimg',
     desc: lang.plugins.toimg.desc,
     type: 'media'
+
 }, async (message) => {
     try {
         if (!message.quoted?.sticker || message.quoted.sticker.animated) return message.send(lang.plugins.toimg.reply_required);
@@ -147,6 +152,7 @@ Command({
     pattern: 'tomp4',
     desc: lang.plugins.tomp4.desc,
     type: 'media'
+
 }, async (message) => {
     try {
         if (!message.quoted?.sticker || !message.quoted.sticker.animated) 
@@ -162,5 +168,95 @@ Command({
         fs.unlinkSync(stickerPath);
     } catch {
         message.send(lang.plugins.tomp4.conversion_failed);
+    }
+});
+
+
+Command({
+    pattern: 'crop ?(.*)',
+    desc: lang.plugins.crop.desc,
+    type: 'media'
+
+}, async (message, match) => {
+    const isVideo = message.video || message.quoted?.video;
+    const isImage = message.image || message.quoted?.image;
+
+    if (!isVideo && !isImage) return message.send(lang.plugins.crop.reply_required);
+
+    if (!match) {
+        if (isVideo) {
+            const meta = await videoMeta(message.raw);
+            if (!meta) return message.send(lang.plugins.crop.failed_info);
+            return message.send(`${meta.width}x${meta.height}`);
+        } else {
+            const mediaData = await downLoad(message.raw, 'both');
+            if (!mediaData) return message.send(lang.plugins.crop.failed_info);
+            const { Jimp } = await import('jimp');
+            const img = await Jimp.read(mediaData.buffer);
+            return message.send(`${img.bitmap.width}x${img.bitmap.height}`);
+        }
+    }
+
+    const input = match.trim();
+    let options = {};
+
+    if (input.includes('-')) {
+        const [dimension, coords] = input.split('-').map(s => s.trim());
+        const [x, y] = coords.split(',').map(Number);
+        
+        if (dimension.includes(':')) {
+            options.ratio = dimension;
+        } else {
+            const [w, h] = dimension.split('x').map(Number);
+            options.width = w;
+            options.height = h;
+        }
+        options.x = x;
+        options.y = y;
+    } else {
+        if (input.includes(':')) {
+            options.ratio = input;
+        } else {
+            const [w, h] = input.split('x').map(Number);
+            options.width = w;
+            options.height = h;
+        }
+    }
+
+    if (isVideo) {
+        const videoPath = await downLoad(message.raw, 'path');
+        if (!videoPath) return message.send(lang.plugins.crop.failed_download);
+
+        const croppedPath = await cropVideo(videoPath, options);
+        if (!croppedPath) return message.send(lang.plugins.crop.failed);
+
+        await message.send({ video: { url: croppedPath } });
+    } else {
+        const croppedPath = await cropImage(message.raw, options);
+        if (!croppedPath) return message.send(lang.plugins.crop.failed);
+
+        await message.send({ image: { url: croppedPath } });
+    }
+});
+
+Command({
+    pattern: 'resize ?(.*)',
+    desc: lang.plugins.resize.desc,
+    type: 'media'
+    
+}, async (message, match) => {
+    if (!message.video && !message.image && !message.quoted?.video && !message.quoted?.image) {
+        return message.send(lang.plugins.resize.reply_required);
+    }
+
+    if (!match) return message.send(lang.plugins.resize.usage);
+
+    const resizedPath = await resizeMedia(message.raw, match.trim());
+    if (!resizedPath) return message.send(lang.plugins.resize.failed);
+
+    if (message.video || message.quoted?.video) {
+        await message.send({ video: { url: resizedPath } });
+    } else {
+        await message.send({ image: { url: resizedPath } });
     }
 });

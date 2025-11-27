@@ -176,7 +176,7 @@ Command({
                         let processedFile = tempFile;
 
                         if (ratio !== '0') {
-                            processedFile = await cropImage(tempFile, ratio, parseInt(placement) || 1);
+                            processedFile = await cropImage(tempFile, { ratio });
                             tempFiles.push(processedFile);
                         }
 
@@ -315,7 +315,7 @@ Command({
                     let processedFile = tempFile;
 
                     if (ratio !== '0') {
-                        processedFile = await cropImage(tempFile, ratio, parseInt(placement) || 1);
+                        processedFile = await cropImage(tempFile, { ratio });
                         tempFiles.push(processedFile);
                     }
 
