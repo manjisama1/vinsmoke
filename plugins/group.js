@@ -1,4 +1,4 @@
-import { Command, downLoad, lang } from '../lib/index.js';
+import { Command, lang, config, downLoad } from '../lib/index.js';
 
 Command({
     pattern: 'promote ?(.*)',
@@ -456,7 +456,7 @@ Command({
             requestList += `${index + 1}. +${number} (@${number})\n`;
         });
 
-        requestList += `\n${lang.plugins.requests.usage}`;
+        requestList += `\n${lang.plugins.requests.usage.format(config.PREFIX)}`;
 
         const mentions = pendingRequests.map(r => typeof r === 'string' ? r : (r.jid || r.id));
         return message.send(requestList, { mentions });
@@ -562,7 +562,7 @@ Command({
     desc: lang.plugins.ephemeral.desc,
     type: 'group',
 }, async (message, match, manji) => {
-    if (!match) return message.send(lang.plugins.ephemeral.usage);
+    if (!match) return message.send(lang.plugins.ephemeral.usage.format(config.PREFIX));
 
     const args = match.split(' ');
     let duration = '7d';

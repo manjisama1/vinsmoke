@@ -1,1 +1,9 @@
-{}
+{
+  "120363420229618933@g.us": {
+    "enabled": false,
+    "allow": [],
+    "deny": [],
+    "action": "delete",
+    "warns": {}
+  }
+}

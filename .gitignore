@@ -3,6 +3,7 @@ plugins/test.js
 node_modules/
 config.env
 session/
+backup/
 test/
 test.js
 *.test.js

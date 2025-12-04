@@ -1,4 +1,4 @@
-import { Command, lang } from '../lib/index.js';
+import { Command, lang, config } from '../lib/index.js';
 
 
 
@@ -84,7 +84,7 @@ Command({
 
     const mode = match.toLowerCase();
     if (mode !== 'public' && mode !== 'private') {
-        return await message.send(lang.plugins.mode.example);
+        return await message.send(lang.plugins.mode.example.format(config.PREFIX));
     }
 
     manji.envSet('BOT_MODE', mode);

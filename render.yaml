@@ -1,0 +1,49 @@
+services:
+  - type: web
+    name: vinsmoke
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: SESSION
+        value: null
+      - key: PREFIX
+        value: .
+      - key: REACT
+        value: 💗
+      - key: STICKER_PACK
+        value: °
+      - key: BOT_MODE
+        value: public
+      - key: SUDO
+        value: null
+      - key: QR
+        value: true
+      - key: BOT_NUM
+        value: null
+      - key: WARN
+        value: 2
+      - key: TIMEZONE
+        value: Asia/Kolkata
+      - key: BOT_LANG
+        value: en
+      - key: AUTO_READ
+        value: false
+      - key: AUTO_STATUS_READ
+        value: false
+      - key: ALWAYS_ONLINE
+        value: false
+      - key: DELETE
+        value: true
+      - key: DATABASE_URL
+        value: null
+      - key: PIN_API
+        value: null
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000

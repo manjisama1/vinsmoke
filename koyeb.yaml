@@ -1,0 +1,62 @@
+name: vinsmoke
+services:
+  - name: vinsmoke-bot
+    type: web
+    git:
+      repository: github.com/manjisama1/vinsmoke
+      branch: main
+      auto_deploy: true
+    docker:
+      dockerfile: Dockerfile
+    instance_type: nano
+    regions:
+      - fra
+    ports:
+      - port: 3000
+        protocol: http
+    env:
+      - name: SESSION
+        value: null
+      - name: PREFIX
+        value: .
+      - name: REACT
+        value: 💗
+      - name: STICKER_PACK
+        value: °
+      - name: BOT_MODE
+        value: public
+      - name: SUDO
+        value: null
+      - name: QR
+        value: true
+      - name: BOT_NUM
+        value: null
+      - name: WARN
+        value: 2
+      - name: TIMEZONE
+        value: Asia/Kolkata
+      - name: BOT_LANG
+        value: en
+      - name: AUTO_READ
+        value: false
+      - name: AUTO_STATUS_READ
+        value: false
+      - name: ALWAYS_ONLINE
+        value: false
+      - name: DELETE
+        value: true
+      - name: DATABASE_URL
+        value: null
+      - name: PIN_API
+        value: http://localhost:3000/scrape
+      - name: NODE_ENV
+        value: production
+      - name: PORT
+        value: 3000
+    health_check:
+      http:
+        path: /
+        port: 3000
+    scaling:
+      min: 1
+      max: 1

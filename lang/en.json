@@ -2,250 +2,250 @@
   "plugins": {
     "mode": {
       "desc": "Switch between public and private bot modes",
-      "current": "_Current Mode: *{0}*_",
-      "example": "_Usage: .mode public | .mode private_",
-      "status": "_Bot mode updated to *{0}*_"
+      "current": "Current Mode: *{0}*",
+      "example": "*Usage:*\n> {0}mode public | {0}mode private",
+      "status": "Bot mode updated to *{0}*"
     },
     "status": {
       "desc": "Check bot status, uptime, memory and system info",
-      "template": "_Bot Status_\n\nUptime: {0}\nMode: {1}\nPrefix: {2}\nSudo Users: {3}\n\nMemory Usage:\nRSS: {4} MB\nHeap Used: {5} MB\nHeap Total: {6} MB\nExternal: {7} MB\n\nSystem Info:\nPlatform: {8}\nNode.js: {9}\nPID: {10}\n\nConnection: {11}"
+      "template": "Bot Status\n\nUptime: {0}\nMode: {1}\nPrefix: {2}\nSudo Users: {3}\n\nMemory Usage:\nRSS: {4} MB\nHeap Used: {5} MB\nHeap Total: {6} MB\nExternal: {7} MB\n\nSystem Info:\nPlatform: {8}\nNode.js: {9}\nPID: {10}\n\nConnection: {11}"
     },
     "restart": {
       "desc": "Restart the bot",
-      "restarting": "_Restarting bot..._"
+      "restarting": "Restarting bot..."
     },
     "var": {
       "desc": "Variable management system",
       "usage": "Use `{0}var help` to see available commands.",
-      "unknown": "_Unknown action: {0}_",
+      "unknown": "Unknown action: {0}",
       "set": {
-        "usage": "_Usage: {0}var set KEY=VALUE_",
+        "usage": "*Usage:*\n> {0}var set KEY=VALUE",
         "success": "Variable {0} set to-\n> `{1}`",
         "failed": {
-          "emptyKey": "_Key cannot be empty_",
-          "generic": "_Unable to set variable_"
+          "emptyKey": "Key cannot be empty",
+          "generic": "Unable to set variable"
         }
       },
       "all": {
-        "empty": "_No variables found_"
+        "empty": "No variables found"
       },
       "del": {
-        "usage": "_Usage: {0}var del KEY_",
-        "success": "_Variable {0} deleted_",
+        "usage": "*Usage:*\n> {0}var del KEY",
+        "success": "Variable {0} deleted",
         "failed": {
-          "notFound": "_Variable not found_"
+          "notFound": "Variable not found"
         }
       },
       "add": {
-        "usage": "_Usage: {0}var add KEY=VALUE_",
+        "usage": "*Usage:*\n> {0}var add KEY=VALUE",
         "success": "Value added to-\n> {0}",
         "failed": {
-          "emptyKey": "_Key cannot be empty_",
-          "generic": "_Unable to add variable_"
+          "emptyKey": "Key cannot be empty",
+          "generic": "Unable to add variable"
         }
       },
       "edit": {
-        "usage": "_Usage: {0}var edit KEY=VALUE_",
+        "usage": "*Usage:*\n> {0}var edit KEY=VALUE",
         "success": "Variable {0} updated to-\n> `{1}`",
-        "notFound": "_Variable {0} not found_"
+        "notFound": "Variable {0} not found"
       },
       "see": {
-        "usage": "_Usage: {0}var see KEY_",
+        "usage": "*Usage:*\n> {0}var see KEY",
         "value": "*{0}:*\n> `{1}`",
-        "notFound": "_Variable {0} not found_"
+        "notFound": "Variable {0} not found"
       },
-      "help": "*Usage:*\n\n_{0}var set KEY=VALUE - Set variable_\n_{0}var all - Get all variables_\n_{0}var del KEY - Delete variable_\n_{0}var add KEY=VALUE - Add variable_\n_{0}var edit KEY=VALUE - Edit existing variable_\n_{0}var see KEY - View variable value_"
+      "help": "*Usage:*\n\n> {0}var set KEY=VALUE - Set variable\n> {0}var all - Get all variables\n> {0}var del KEY - Delete variable\n> {0}var add KEY=VALUE - Add variable\n> {0}var edit KEY=VALUE - Edit existing variable\n> {0}var see KEY - View variable value"
     },
     "setsudo": {
       "desc": "Add sudo users to the bot",
-      "pmOnly": "_Use in private chat_",
-      "noUser": "_Reply to a message or mention a user to add as sudo_",
-      "added": "_Added as sudo: *{0}*_",
-      "exists": "_Already sudo: *{0}*_"
+      "pmOnly": "Use in private chat",
+      "noUser": "Reply to a message or mention a user to add as sudo",
+      "added": "Added as sudo: *{0}*",
+      "exists": "Already sudo: *{0}*"
     },
     "delsudo": {
       "desc": "Remove sudo users",
-      "pmOnly": "_Use in private chat_",
-      "noUser": "_Reply to a message or mention a user to remove from sudo_",
-      "removed": "_Sudo removed for: {0}_",
-      "notFound": "_Not found in sudo: {0}_"
+      "pmOnly": "Use in private chat",
+      "noUser": "Reply to a message or mention a user to remove from sudo",
+      "removed": "Sudo removed for: {0}",
+      "notFound": "Not found in sudo: {0}"
     },
     "ping": {
       "desc": "Check bot response time",
-      "pingMessage": "_Ping!_",
-      "pongMessage": "_Pong Response: {0}ms_"
+      "pingMessage": "Ping!",
+      "pongMessage": "Pong Response: {0}ms"
     },
     "menu": {
       "desc": "Show bot menu"
     },
     "promote": {
       "desc": "Promote a user to admin",
-      "noUser": "_Mention or reply to a user to promote_",
-      "notAllowed": "_You must be an admin to promote users_",
-      "botNotAdmin": "_I need to be admin to promote someone_",
-      "alreadyAdmin": "_{0} is already an admin_",
-      "notMember": "_{0} is not in the group_",
-      "success": "_{0} promoted to admin successfully_",
-      "error": "_Failed to promote {0}: {1}_"
+      "noUser": "Mention or reply to a user to promote",
+      "notAllowed": "You must be an admin to promote users",
+      "botNotAdmin": "I need to be admin to promote someone",
+      "alreadyAdmin": "{0} is already an admin",
+      "notMember": "{0} is not in the group",
+      "success": "{0} promoted to admin successfully",
+      "error": "Failed to promote {0}: {1}"
     },
     "demote": {
       "desc": "Demote an admin to member",
-      "noUser": "_Mention or reply to a user to demote_",
-      "notAllowed": "_You must be an admin to demote users_",
-      "botNotAdmin": "_I need to be admin to demote someone_",
-      "notAdmin": "_{0} is not an admin_",
-      "cantDemoteSuper": "_{0} is a superadmin, I can't demote them_",
-      "lastAdmin": "_{0} is the last admin, can't demote_",
-      "success": "_{0} demoted successfully_",
-      "error": "_Failed to demote {0}: {1}_"
+      "noUser": "Mention or reply to a user to demote",
+      "notAllowed": "You must be an admin to demote users",
+      "botNotAdmin": "I need to be admin to demote someone",
+      "notAdmin": "{0} is not an admin",
+      "cantDemoteSuper": "{0} is a superadmin, I can't demote them",
+      "lastAdmin": "{0} is the last admin, can't demote",
+      "success": "{0} demoted successfully",
+      "error": "Failed to demote {0}: {1}"
     },
     "kick": {
       "desc": "Remove a user from the group",
-      "noUser": "_Mention or reply to a user to kick_",
-      "notAllowed": "_You must be an admin to kick users_",
-      "botNotAdmin": "_I need to be admin to kick someone_",
-      "notMember": "_{0} is not in the group_",
-      "cantKickSuper": "_{0} is a superadmin, I can't kick them_",
-      "cantKickAdmin": "_{0} is an admin, I can't kick them without superadmin rights_",
-      "cantKickSelf": "_I can't kick myself {0}_",
-      "success": "_{0} has been kicked from the group_",
-      "error": "_Failed to kick {0}: {1}_"
+      "noUser": "Mention or reply to a user to kick",
+      "notAllowed": "You must be an admin to kick users",
+      "botNotAdmin": "I need to be admin to kick someone",
+      "notMember": "{0} is not in the group",
+      "cantKickSuper": "{0} is a superadmin, I can't kick them",
+      "cantKickAdmin": "{0} is an admin, I can't kick them without superadmin rights",
+      "cantKickSelf": "I can't kick myself {0}",
+      "success": "{0} has been kicked from the group",
+      "error": "Failed to kick {0}: {1}"
     },
     "add": {
       "desc": "Add a user to the group",
-      "noUser": "_Mention or reply to a user to add_",
-      "notAllowed": "_You must be an admin to add users_",
-      "botNotAdmin": "_I need to be admin to add someone_",
-      "alreadyMember": "_{0} is already in the group_",
-      "success": "_{0} has been added to the group_",
-      "error": "_Failed to add {0}: {1}_"
+      "noUser": "Mention or reply to a user to add",
+      "notAllowed": "You must be an admin to add users",
+      "botNotAdmin": "I need to be admin to add someone",
+      "alreadyMember": "{0} is already in the group",
+      "success": "{0} has been added to the group",
+      "error": "Failed to add {0}: {1}"
     },
     "open": {
       "desc": "Open the group for everyone to send messages",
-      "notAllowed": "_You must be an admin to open the group_",
-      "botNotAdmin": "_I need to be admin to open the group_",
-      "opened": "_Group opened_",
-      "openedFor": "_Group opened for {0}_",
-      "closedAfter": "_Group closed after {0}_",
-      "failed": "_Failed to open the group_"
+      "notAllowed": "You must be an admin to open the group",
+      "botNotAdmin": "I need to be admin to open the group",
+      "opened": "Group opened",
+      "openedFor": "Group opened for {0}",
+      "closedAfter": "Group closed after {0}",
+      "failed": "Failed to open the group"
     },
     "close": {
       "desc": "Close the group so only admins can send messages",
-      "notAllowed": "_You must be an admin to close the group_",
-      "botNotAdmin": "_I need to be admin to close the group_",
-      "closed": "_Group closed_",
-      "closedFor": "_Group closed for {0}_",
-      "openedAfter": "_Group opened after {0}_",
-      "failed": "_Failed to close the group_"
+      "notAllowed": "You must be an admin to close the group",
+      "botNotAdmin": "I need to be admin to close the group",
+      "closed": "Group closed",
+      "closedFor": "Group closed for {0}",
+      "openedAfter": "Group opened after {0}",
+      "failed": "Failed to close the group"
     },
     "disappear": {
       "desc": "Enable or disable disappearing messages",
-      "usage": "_Use: disappear on <days> / disappear off_",
-      "notAllowed": "_You must be an admin to change disappearing messages_",
-      "botNotAdmin": "_I need to be admin to change disappearing messages_",
-      "enabled": "_Disappearing messages enabled for {0}_",
-      "disabled": "_Disappearing messages disabled_",
-      "enabledText": "_Disappearing messages enabled_",
-      "disabledText": "_Disappearing messages disabled_",
-      "failed": "_Failed to change disappearing messages settings_"
+      "usage": "*Usage:*\n> disappear on <days> / disappear off",
+      "notAllowed": "You must be an admin to change disappearing messages",
+      "botNotAdmin": "I need to be admin to change disappearing messages",
+      "enabled": "Disappearing messages enabled for {0}",
+      "disabled": "Disappearing messages disabled",
+      "enabledText": "Disappearing messages enabled",
+      "disabledText": "Disappearing messages disabled",
+      "failed": "Failed to change disappearing messages settings"
     },
     "gsetting": {
       "desc": "Update who can change group settings",
-      "usage": "_Use: gsetting admin / gsetting all_",
-      "notAllowed": "_You must be an admin to change group settings_",
-      "botNotAdmin": "_I need to be admin to change group settings_",
-      "updated": "_Group settings updated: {0}_",
-      "failed": "_Failed to update group settings_"
+      "usage": "*Usage:*\n> gsetting admin / gsetting all",
+      "notAllowed": "You must be an admin to change group settings",
+      "botNotAdmin": "I need to be admin to change group settings",
+      "updated": "Group settings updated: {0}",
+      "failed": "Failed to update group settings"
     },
     "invite": {
       "desc": "Get group invite link",
-      "notAllowed": "_You must be an admin to get invite link_",
+      "notAllowed": "You must be an admin to get invite link",
       "success": "https://chat.whatsapp.com/{0}",
-      "failed": "_Failed to get invite link_",
-      "notAdmin": "_Bot not admin_"
+      "failed": "Failed to get invite link",
+      "notAdmin": "Bot not admin"
     },
     "revoke": {
       "desc": "Revoke group invite link",
-      "notAllowed": "_You must be an admin to revoke invite link_",
-      "success": "_Invite link revoked_",
-      "notAdmin": "_Bot not admin_"
+      "notAllowed": "You must be an admin to revoke invite link",
+      "success": "Invite link revoked",
+      "notAdmin": "Bot not admin"
     },
     "delete": {
       "desc": "Delete a message",
-      "noQuoted": "_Reply to a message to delete_",
-      "notAllowed": "_You can only delete your own messages or be an admin_"
+      "noQuoted": "Reply to a message to delete",
+      "notAllowed": "You can only delete your own messages or be an admin"
     },
     "clear": {
       "desc": "Clear all messages in chat",
-      "notAllowed": "_You must be an admin to clear chat_",
-      "success": "_Cleared_",
-      "failed": "_Failed to clear_"
+      "notAllowed": "You must be an admin to clear chat",
+      "success": "Cleared",
+      "failed": "Failed to clear"
     },
     "ephemeral": {
-      "desc": "Send ephemeral message [1d|7d|90d] text",
-      "usage": "_Usage: .ephemeral [1d|7d|90d] <text>_",
-      "noText": "_Provide text to send_"
+      "desc": "Send ephemeral message [1d |7d |90d] text",
+      "usage": "*Usage:*\n> {0}ephemeral [1d |7d |90d] <text>",
+      "noText": "Provide text to send"
     },
     "leave": {
       "desc": "Make bot leave the current group"
     },
     "joinGroup": {
       "desc": "Join group using invite link",
-      "sudoOnly": "_Only sudo users can make bot join groups_",
-      "noLink": "_Provide group invite link_",
-      "invalidLink": "_Invalid group link_",
-      "success": "_Joined the group!_",
-      "requestSent": "_Requested to join the group!_",
-      "failed": "_Failed to join group_"
+      "sudoOnly": "Only sudo users can make bot join groups",
+      "noLink": "Provide group invite link",
+      "invalidLink": "Invalid group link",
+      "success": "Joined the group!",
+      "requestSent": "Requested to join the group!",
+      "failed": "Failed to join group"
     },
     "groupInfo": {
       "desc": "Get group info from invite link or group ID",
-      "noLink": "_Provide group invite link or group ID_",
-      "invalidLink": "_Invalid group link or invite code_",
-      "notInGroup": "_Bot is not in this group, cannot fetch details via group ID_",
+      "noLink": "Provide group invite link or group ID",
+      "invalidLink": "Invalid group link or invite code",
+      "notInGroup": "Bot is not in this group, cannot fetch details via group ID",
       "template": "*GROUP INFORMATION*\n\n*Name:* {0}\n*JID:* {1}\n*Members:* {2}\n*Created:* {3}\n*Description:* {4}\n*Admins:* {5}\n*Super Admin:* {6}\n*Community:* {7}\n\n*Settings:*\n• {8}",
-      "noDesc": "_No description_",
-      "failed": "_Failed to get group info: {0}_"
+      "noDesc": "No description",
+      "failed": "Failed to get group info: {0}"
     },
     "accept": {
       "desc": "Accept join requests - use numbers or leave empty for all",
-      "notAllowed": "_You must be an admin to accept join requests_",
-      "botNotAdmin": "_I need to be admin to accept join requests_",
-      "noPending": "_No pending join requests_",
-      "noMatch": "_No matching pending requests found_",
-      "success": "_{0} accepted_",
-      "error": "_{0}: {1}_",
-      "failed": "_Failed to process accept requests_"
+      "notAllowed": "You must be an admin to accept join requests",
+      "botNotAdmin": "I need to be admin to accept join requests",
+      "noPending": "No pending join requests",
+      "noMatch": "No matching pending requests found",
+      "success": "{0} accepted",
+      "error": "{0}: {1}",
+      "failed": "Failed to process accept requests"
     },
     "reject": {
       "desc": "Reject join requests - use numbers or leave empty for all",
-      "notAllowed": "_You must be an admin to reject join requests_",
-      "botNotAdmin": "_I need to be admin to reject join requests_",
-      "noPending": "_No pending join requests_",
-      "noMatch": "_No matching pending requests found_",
-      "success": "_{0} rejected_",
-      "error": "_{0}: {1}_",
-      "failed": "_Failed to process reject requests_"
+      "notAllowed": "You must be an admin to reject join requests",
+      "botNotAdmin": "I need to be admin to reject join requests",
+      "noPending": "No pending join requests",
+      "noMatch": "No matching pending requests found",
+      "success": "{0} rejected",
+      "error": "{0}: {1}",
+      "failed": "Failed to process reject requests"
     },
     "requests": {
       "desc": "Show pending join requests",
-      "notAllowed": "_You must be an admin to view join requests_",
-      "failed": "_Failed to get requests_",
-      "empty": "_No pending join requests_",
+      "notAllowed": "You must be an admin to view join requests",
+      "failed": "Failed to get requests",
+      "empty": "No pending join requests",
       "header": "*Pending Join Requests ({0}):*\n\n",
-      "usage": "_Use .accept +number or .reject +number_\n_Use .accept or .reject to process all_"
+      "usage": "*Usage:*\n> Use {0}accept +number or {0}reject +number\n> Use {0}accept or {0}reject to process all"
     },
     "sticker": {
       "desc": "Convert an image or video into a sticker",
-      "reply_required": "_Reply to a media_"
+      "reply_required": "Reply to a media"
     },
     "steal": {
       "desc": "Steal a sticker and optionally set pack and author",
-      "reply_required": "_Reply to a sticker_"
+      "reply_required": "Reply to a sticker"
     },
     "exif": {
       "desc": "Get EXIF information from a sticker",
-      "no_data": "_No EXIF data found_",
+      "no_data": "No EXIF data found",
       "info": "*STICKER INFORMATION*\n\nPack: {0}\nAuthor: {1}\nPack ID: {2}\nEmojis: {3}"
     },
     "jid": {
@@ -264,12 +264,12 @@
     },
     "star": {
       "desc": "Star a replied message",
-      "noQuoted": "_Reply to a message to star it._",
+      "noQuoted": "Reply to a message to star it.",
       "error": "Failed to star message: {0}"
     },
     "unstar": {
       "desc": "Unstar a replied message",
-      "noQuoted": "_Reply to a message to unstar it._",
+      "noQuoted": "Reply to a message to unstar it.",
       "error": "Failed to unstar message: {0}"
     },
     "asteal": {
@@ -284,7 +284,7 @@
     },
     "antilink": {
       "desc": "Protect group from links",
-      "usage": "{0}antilink on/off, warn/delete/kick, allow/deny <link>, clear, info",
+      "usage": "*Usage:*\n> {0}antilink on/off, warn/delete/kick, allow/deny <link>, clear, info",
       "enabled": "Antilink enabled",
       "disabled": "Antilink disabled",
       "action": "Action set to: {0}",
@@ -292,14 +292,14 @@
       "cleared": "Antilink cleared",
       "info": "Status: {0}\nAction: {1}\nAllowed: {2}\nDenied: {3}",
       "invalid": "Invalid command",
-      "warning": "*Antilink Warning*\n@{0} → {1}/{2}\n_Links are not allowed in this group._",
-      "kickedWarning": "_User @{0} removed for repeated link violations._",
-      "kickedLink": "_User @{0} removed for posting links._",
-      "linkUsage": "Usage: {0}antilink {1} domain1.com,domain2.com"
+      "warning": "*Antilink Warning*\n@{0} → {1}/{2}\nLinks are not allowed in this group.",
+      "kickedWarning": "User @{0} removed for repeated link violations.",
+      "kickedLink": "User @{0} removed for posting links.",
+      "linkUsage": "*Usage:*\n> {0}antilink {1} domain1.com,domain2.com"
     },
     "antiword": {
       "desc": "Protect group from bad words",
-      "usage": "{0}antiword on/off, warn/delete/kick, allow/deny <words>, clear, info",
+      "usage": "*Usage:*\n> {0}antiword on/off, warn/delete/kick, allow/deny <words>, clear, info",
       "enabled": "Antiword enabled",
       "disabled": "Antiword disabled",
       "action": "Action set to: {0}",
@@ -307,26 +307,26 @@
       "cleared": "Antiword cleared",
       "info": "Status: {0}\nAction: {1}\nAllowed: {2}\nDenied: {3}",
       "invalid": "Invalid command",
-      "warning": "*Antiword Warning*\n@{0} → {1}/{2}\n_Bad words are not allowed in this group._",
-      "kickedWarning": "_User @{0} removed for repeated word violations._",
-      "kickedWord": "_User @{0} removed for using bad words._",
-      "wordUsage": "Usage: {0}antiword {1} word1,word2,word3"
+      "warning": "*Antiword Warning*\n@{0} → {1}/{2}\nBad words are not allowed in this group.",
+      "kickedWarning": "User @{0} removed for repeated word violations.",
+      "kickedWord": "User @{0} removed for using bad words.",
+      "wordUsage": "*Usage:*\n> {0}antiword {1} word1,word2,word3"
     },
     "ban": {
       "desc": "Ban users from sending messages",
       "unbanDesc": "Unban users to allow messaging",
       "listDesc": "Show list of banned users",
       "whobanDesc": "Show detailed ban information for users",
-      "noUser": "_Reply to a message or mention users to ban/unban_",
-      "notAllowed": "_You must be an admin to ban/unban users_",
-      "botNotAdmin": "_I need to be admin to ban/unban users_",
-      "cantBanBot": "_Cannot ban the bot {0}_",
-      "cantBanAdmin": "_Cannot ban admin {0}_",
-      "bannedPerm": "_{0} banned permanently_",
-      "bannedTemp": "_{0} banned for {1}_",
-      "unbanned": "_{0} unbanned_",
-      "notBanned": "_{0} is not banned_",
-      "noBans": "_No banned users in this group_",
+      "noUser": "Reply to a message or mention users to ban/unban",
+      "notAllowed": "You must be an admin to ban/unban users",
+      "botNotAdmin": "I need to be admin to ban/unban users",
+      "cantBanBot": "Cannot ban the bot {0}",
+      "cantBanAdmin": "Cannot ban admin {0}",
+      "bannedPerm": "{0} banned permanently",
+      "bannedTemp": "{0} banned for {1}",
+      "unbanned": "{0} unbanned",
+      "notBanned": "{0} is not banned",
+      "noBans": "No banned users in this group",
       "listHeader": "*Banned Users:*\n\n",
       "listItemPerm": "{0}. {1} - Permanent\n",
       "listItemTemp": "{0}. {1} - {2} remaining\n",
@@ -339,44 +339,44 @@
       "whounbanAuto": "Auto-unbanned on: {0}\n",
       "whounbanCurrently": "Status: Currently banned",
       "whounbanNot": "Status: Not banned",
-      "neverUnbanned": "_{0} has never been unbanned_",
+      "neverUnbanned": "{0} has never been unbanned",
       "clearDesc": "Clear all ban data for this group",
-      "cleared": "_Cleared all ban data ({0} users)_",
-      "noUnbans": "_No unbanned users in this group_",
+      "cleared": "Cleared all ban data ({0} users)",
+      "noUnbans": "No unbanned users in this group",
       "unbanListHeader": "*Unbanned Users:*\n\n",
       "unbanListItemManual": "{0}. {1} - Unbanned by {2} on {3}\n",
       "unbanListItemAuto": "{0}. {1} - Auto-unbanned on {2}\n"
     },
     "tg": {
       "desc": "Download Telegram stickers",
-      "reply_required": "_Send a telegram sticker pack link_",
-      "fetching": "_Fetching stickers..._",
-      "done": "_Stickers Sent_",
-      "failed": "_failed to fetch stickers_"
+      "reply_required": "Send a telegram sticker pack link",
+      "fetching": "Fetching stickers...",
+      "done": "Stickers Sent",
+      "failed": "failed to fetch stickers"
     },
     "cs": {
       "desc": "Create sticker using sticker settings",
-      "reply_required": "_Reply or attach an image_",
-      "failed": "_Sticker creation failed_",
-      "error": "_Error while processing sticker_"
+      "reply_required": "Reply or attach an image",
+      "failed": "Sticker creation failed",
+      "error": "Error while processing sticker"
     },
     "spotify": {
       "desc": "Download Spotify songs",
-      "usage": "_Usage: .spotify <link> or reply to a Spotify link_",
-      "downloading": "_Downloading song..._",
-      "failed": "_Failed to download song_",
-      "invalid_url": "_Invalid Spotify URL_"
+      "usage": "*Usage:*\n> .spotify <link> or reply to a Spotify link",
+      "downloading": "Downloading song...",
+      "failed": "Failed to download song",
+      "invalid_url": "Invalid Spotify URL"
     },
     "instagram": {
       "desc": "Download Instagram videos",
-      "usage": "_Usage: .insta <link> or reply to an Instagram link_",
-      "downloading": "_📹 Downloading video..._",
-      "failed": "_Failed to download video_",
-      "invalid_url": "_Invalid Instagram URL_"
+      "usage": "*Usage:*\n> .insta <link> or reply to an Instagram link",
+      "downloading": "📹 Downloading video...",
+      "failed": "Failed to download video",
+      "invalid_url": "Invalid Instagram URL"
     },
     "onwa": {
       "desc": "Check WhatsApp numbers",
-      "usage": "*Usage:* {0}onwa 91xxxxxxx",
+      "usage": "*Usage:*\n> {0}onwa 919862717xxx",
       "maxXAllowed": "Max 3 x allowed",
       "tooManyNumbers": "Too many numbers",
       "checked": "`Checked: {0}`",
@@ -467,7 +467,7 @@
     },
     "pinterest": {
       "desc": "Pinterest downloader with queue",
-      "usage": "Usage: {0}pt <mode> <query>\nModes: i/s/add/go/stop",
+      "usage": "*Usage:*\n> {0}pt <mode> <query>\n> Modes: i|s|add|go|stop",
       "invalid_mode": "Invalid mode",
       "no_query": "Provide query",
       "searching": "Found {0} via {1}. Sending {2} {3}: {4}",
@@ -477,7 +477,7 @@
       "no_active": "No active process",
       "no_api": "PIN_API not configured",
       "backup_no_link": "Backup can't handle links. Use API",
-      "add_usage": "Usage: {0}pt add [i/s] [count] <query1>,<query2>",
+      "add_usage": "*Usage:*\n> {0}pt add [i/s] [count] <query1>,<query2>",
       "add_fetching": "({0}) Searching: {1} ({2})",
       "add_done": "{0}: {1} links",
       "add_failed": "{0}: No results",
@@ -552,55 +552,55 @@
     },
     "bass": {
       "desc": "Bass boost effect",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "deep": {
       "desc": "Deep voice effect",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "slow": {
       "desc": "Slow down audio",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "fast": {
       "desc": "Speed up audio",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "reverse": {
       "desc": "Reverse audio",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "chipmunk": {
       "desc": "Chipmunk voice effect",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "echo": {
       "desc": "Echo effect",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "robot": {
       "desc": "Robot voice effect",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "nightcore": {
       "desc": "Nightcore effect",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "earrape": {
       "desc": "Earrape effect",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "tremolo": {
       "desc": "Tremolo effect",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "underwater": {
       "desc": "Underwater effect",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "tovn": {
       "desc": "Convert audio to voice note",
-      "reply_required": "_Reply to an audio_"
+      "reply_required": "Reply to an audio"
     },
     "crop": {
       "desc": "Crop video or image to desired dimensions",
@@ -614,6 +614,27 @@
       "reply_required": "Reply to video or image",
       "usage": "Usage: .resize -50% | +20% | x512 | 512x | 720x512",
       "failed": "Resize failed"
+    },
+    "rotate": {
+      "desc": "Rotate video or image",
+      "reply_required": "Reply to video or image",
+      "usage": "Usage: .rotate 90 | -90 | 180",
+      "failed": "Rotation failed"
+    },
+    "calculate": {
+      "desc": "Advanced calculator",
+      "usage": "*Usage:*\n> {0}calc 2+2 or {0}calc √16 or {0}calc 2^3",
+      "result": "*Calculator*\n\n{0} = {1}"
+    },
+    "discount": {
+      "desc": "Discount calculator",
+      "usage": "*Usage:*\n> {0}discount 500 20",
+      "result": "*Discount Calculator*\n\nOriginal: {0}\nDiscount: {1}%\nSaved: {2}\nFinal: {3}"
+    },
+    "percentage": {
+      "desc": "Percentage calculator", 
+      "usage": "*Usage:*\n> {0}percentage 500 120",
+      "result": "*Percentage Calculator*\n\n{0} of {1} = {2}%"
     }
   }
 }

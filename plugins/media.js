@@ -1,4 +1,18 @@
-import { Command, lang, spotifyDl, instaDl, downLoad, webpToImage, webpToMp4, cropVideo, cropImage, videoMeta, resizeMedia } from '../lib/index.js';
+import {
+  Command,
+  lang,
+  spotifyDl,
+  instaDl,
+  downLoad,
+  webpToImage,
+  webpToMp4,
+  cropVideo,
+  cropImage,
+  resizeMedia,
+  mediaRotate,
+  videoMeta
+} from "../lib/index.js"
+
 import fs from 'fs';
 import axios from 'axios';
 
@@ -258,5 +272,26 @@ Command({
         await message.send({ video: { url: resizedPath } });
     } else {
         await message.send({ image: { url: resizedPath } });
+    }
+});
+
+Command({
+    pattern: 'rotate ?(.*)',
+    desc: lang.plugins.rotate.desc,
+    type: 'media'
+}, async (message, match) => {
+    const isVideo = message.video || message.quoted?.video;
+    const isImage = message.image || message.quoted?.image;
+
+    if (!isVideo && !isImage) return message.send(lang.plugins.rotate.reply_required);
+    if (!match) return message.send(lang.plugins.rotate.usage);
+
+    const rotated = await mediaRotate(message.raw, match.trim());
+    if (!rotated) return message.send(lang.plugins.rotate.failed);
+
+    if (isVideo) {
+        await message.send({ video: { url: rotated } });
+    } else {
+        await message.send({ image: { url: rotated } });
     }
 });
