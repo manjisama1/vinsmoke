@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
-    "pm2": "pm2 start index.js --name vinsmoke",
+    "pm2": "pm2 start . --attach --name vinsmoke",
     "pm2:stop": "pm2 stop vinsmoke",
     "pm2:restart": "pm2 restart vinsmoke",
     "pm2:delete": "pm2 delete vinsmoke"
