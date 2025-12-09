@@ -1,4 +1,5 @@
-import { Command, downLoad, lang, config, cleanupTemp, getCurrentHash, getLatestHash, hasUpdates, getCommits, updateToCommit, reloadEnv } from '../lib/index.js';
+import { Command, downLoad, lang, config, cleanupTemp, getCurrentHash, getLatestHash, hasUpdates, getCommits, updateToCommit } from '../lib/index.js';
+
 
 Command({
     pattern: 'var ?(.*)',
@@ -117,6 +118,7 @@ Command({
     }
 });
 
+
 Command({
     pattern: 'setsudo ?(.*)',
     desc: lang.plugins.setsudo.desc,
@@ -190,7 +192,8 @@ Command({
 Command({
     pattern: 'username ?(.*)',
     desc: lang.plugins.username.desc,
-    type: 'owner'
+    type: 'owner',
+    sudo: true
 }, async (message, match, manji) => {
     const name = match?.trim();
     if (!name) return message.send(lang.plugins.username.noName);
@@ -198,10 +201,12 @@ Command({
     await message.send(lang.plugins.username.updated.format(name));
 });
 
+
 Command({
     pattern: 'userbio ?(.*)',
     desc: lang.plugins.userbio.desc,
-    type: 'owner'
+    type: 'owner',
+    sudo: true
 }, async (message, match, manji) => {
     const bio = match?.trim();
     if (!bio) return message.send(lang.plugins.userbio.noBio);
@@ -252,6 +257,7 @@ Command({
         }
     });
 });
+
 
 Command({
     pattern: 'update ?(.*)',

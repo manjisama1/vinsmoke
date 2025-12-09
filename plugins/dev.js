@@ -1,10 +1,12 @@
 import { Command, lang, Tracker } from '../lib/index.js';
 import util from 'util';
 
+
 Command({
     pattern: 'track ?(.*)',
     desc: lang.plugins.track.desc,
-    type: 'dev'
+    type: 'dev',
+    sudo: true
 }, async (message, match) => {
     const input = match?.trim() || '';
     const parts = input.split(' ');
@@ -58,15 +60,15 @@ Command({
     });
 });
 
+
 Command({
     pattern: 'db ?(.*)',
     desc: lang.plugins.db.desc,
-    type: 'dev'
+    type: 'dev',
+    sudo: true
 }, async (message) => {
     const data = message.quoted || message.raw;
     const json = JSON.stringify(data, null, 2);
     await message.send(`\`\`\`json\n${json}\n\`\`\``);
     console.log(data);
 });
-
-

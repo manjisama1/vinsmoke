@@ -5,7 +5,8 @@ import {
     addExif,
     exif,
     tgStk,
-    lang
+    lang,
+    Tracker,
 } from '../lib/index.js';
 import fs from 'fs';
 
@@ -46,6 +47,7 @@ Command({
 
     await message.send({ sticker: stickerBuffer });
 });
+
 
 Command({
     pattern: 'steal ?(.*)',
@@ -175,6 +177,7 @@ Command({
         await msgFetching?.delete?.().catch(() => { });
     }
 });
+
 
 Command({
     pattern: 'cs',

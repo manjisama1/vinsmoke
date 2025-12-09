@@ -35,11 +35,12 @@ const formatMultiple = results => {
     return msg.trim();
 };
 
+
 Command({
     pattern: 'plugin ?(.*)',
     description: lang.plugins.plugin.desc,
     category: 'system',
-    fromMe: true
+    sudo: true
 }, async (message, match) => {
     const input = match?.trim() || '';
 
@@ -64,11 +65,12 @@ Command({
     );
 });
 
+
 Command({
     pattern: 'plugout ?(.*)',
     description: lang.plugins.plugout.desc,
     category: 'system',
-    fromMe: true
+    sudo: true
 }, async (message, match) => {
     const input = match?.trim() || '';
 

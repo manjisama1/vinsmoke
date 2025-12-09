@@ -7,9 +7,20 @@ Command({
     desc: lang.plugins.jid.desc,
     type: 'tools',
 }, async (message, match, manji) => {
+    const input = match || message.quoted?.text;
+    
+    if (input && input.includes('chat.whatsapp.com')) {
+        try {
+            const response = await manji.gInfoCode(input);
+            const info = response[0];
+            if (info?.id) return message.send(info.id);
+        } catch {}
+    }
+    
     const jids = await manji.getUserJid(message, match);
     return message.send(jids.length ? jids.join('\n') : message.chat);
 });
+
 
 Command({
     pattern: 'lid ?(.*)',
@@ -20,6 +31,7 @@ Command({
     return message.send(lids.length ? lids.join('\n') : lang.plugins.lid.nouser);
 });
 
+
 Command({
     pattern: 'num ?(.*)',
     desc: lang.plugins.num.desc,
@@ -28,23 +40,8 @@ Command({
     const jids = await manji.getUserJid(message, match);
     if (!jids.length) return message.send(lang.plugins.num.nouser);
 
-    const numbers = jids.map(jid => {
-        const phoneNumber = jid.split('@')[0];
-        return `+${phoneNumber}`;
-    });
-
+    const numbers = jids.map(jid => `+${jid.split('@')[0]}`);
     return message.send(numbers.join('\n'));
-});
-
-Command({
-    pattern: 'linkjid ?(.*)',
-    desc: lang.plugins.linkjid.desc,
-    type: 'tools',
-}, async (message, match, manji) => {
-    const response = await manji.gInfoCode(match || message.quoted.text);
-    const info = response[0];
-    const jid = info.id;
-    await message.send(jid);
 });
 
 
@@ -104,5 +101,3 @@ Command({
 
     await msg.send(out);
 });
-
-

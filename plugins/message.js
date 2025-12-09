@@ -1,9 +1,11 @@
 import { Command, lang } from '../lib/index.js';
 
+
 Command({
     pattern: 'star',
     desc: 'Star a message (reply to message)',
     type: 'owner',
+    sudo: true
 }, async (message) => {
     try {
         if (!message.quoted) {
@@ -15,10 +17,12 @@ Command({
     }
 });
 
+
 Command({
     pattern: 'unstar',
     desc: 'Unstar a message (reply to message)',
     type: 'owner',
+    sudo: true
 }, async (message) => {
     try {
         if (!message.quoted) {
@@ -29,4 +33,3 @@ Command({
         await message.reply(lang.plugins.unstar.error.format(error.message));
     }
 });
-

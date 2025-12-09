@@ -1,28 +1,4 @@
-import { Command, lang, config } from '../lib/index.js';
-
-const calc = (expr) => {
-    try {
-        const clean = expr
-            .replace(/×/g, '*')
-            .replace(/÷/g, '/')
-            .replace(/√(\d+)/g, 'Math.sqrt($1)')
-            .replace(/(\d+)\^(\d+)/g, 'Math.pow($1,$2)')
-            .replace(/(\d+)²/g, 'Math.pow($1,2)')
-            .replace(/π/g, 'Math.PI')
-            .replace(/sin\(([^)]+)\)/g, 'Math.sin($1)')
-            .replace(/cos\(([^)]+)\)/g, 'Math.cos($1)')
-            .replace(/tan\(([^)]+)\)/g, 'Math.tan($1)')
-            .replace(/log\(([^)]+)\)/g, 'Math.log10($1)')
-            .replace(/ln\(([^)]+)\)/g, 'Math.log($1)');
-        
-        if (!/^[0-9+\-*/.()Mathsincotanlgpwr\s,]+$/.test(clean)) throw new Error('Invalid');
-        
-        const result = Function(`"use strict"; return (${clean})`)();
-        return isFinite(result) ? result : 'Error';
-    } catch {
-        return 'Invalid expression';
-    }
-};
+import { Command, lang, config, calculate } from '../lib/index.js';
 
 Command({
     pattern: 'calculate ?(.*)',
@@ -32,8 +8,8 @@ Command({
 }, async (message, match) => {
     if (!match) return message.send(lang.plugins.calculate.usage.format(config.PREFIX));
     
-    const result = calc(match.trim());
     const expr = match.trim();
+    const result = calculate(expr);
     
     await message.send(lang.plugins.calculate.result.format(expr, result));
 });

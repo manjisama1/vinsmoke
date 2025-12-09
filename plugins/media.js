@@ -16,12 +16,12 @@ import {
 import fs from 'fs';
 import axios from 'axios';
 
+
 Command({
     pattern: 'spotify ?(.*)',
     aliases: ['sp', 'song'],
     desc: lang.plugins.spotify.desc,
     type: 'media',
-
 }, async (message, match) => {
     const url =
         match?.trim() ||
@@ -61,16 +61,16 @@ Command({
     }
 });
 
+
 Command({
     pattern: 'instagram ?(.*)',
     aliases: ['ig', 'insta'],
     desc: lang.plugins.instagram.desc,
     type: 'media',
-
 }, async (message, match) => {
     const url =
         match?.trim() ||
-        message.quoted?.text?.match(/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+/)?.[0];
+        message.quoted?.text?.match(/https?:\/\/(?:www\.)?instagram\.com\/(?:p|ree.l|tv)\/[a-zA-Z0-9_-]+/)?.[0];
 
     if (!url) return message.send(lang.plugins.instagram.usage);
     if (!/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+/.test(url))
@@ -98,12 +98,12 @@ Command({
     }
 });
 
+
 Command({
     pattern: 'view',
     aliases: ['vv'],
     desc: lang.plugins.view.desc,
     type: 'media'
-
 }, async (message) => {
     if (!message.quoted?.viewOnce)
         return message.send(lang.plugins.view.reply_vv);
@@ -120,13 +120,14 @@ Command({
     await message.send({ forward: quoted });
 });
 
+
 Command({
     pattern: 'save',
     aliases: ['sv', '.'],
     desc: lang.plugins.save.desc,
     type: 'media',
-    react: false
-
+    react: false,
+    sudo: true
 }, async (message) => {
     if (!message.quoted) return message.send(lang.plugins.save.reply_required);
 
@@ -142,11 +143,11 @@ Command({
     await message.send({ forward: quoted }, {}, message.botJid);
 });
 
+
 Command({
     pattern: 'toimg',
     desc: lang.plugins.toimg.desc,
     type: 'media'
-
 }, async (message) => {
     try {
         if (!message.quoted?.sticker || message.quoted.sticker.animated) return message.send(lang.plugins.toimg.reply_required);
@@ -162,11 +163,11 @@ Command({
     }
 });
 
+
 Command({
     pattern: 'tomp4',
     desc: lang.plugins.tomp4.desc,
     type: 'media'
-
 }, async (message) => {
     try {
         if (!message.quoted?.sticker || !message.quoted.sticker.animated) 
@@ -190,7 +191,6 @@ Command({
     pattern: 'crop ?(.*)',
     desc: lang.plugins.crop.desc,
     type: 'media'
-
 }, async (message, match) => {
     const isVideo = message.video || message.quoted?.video;
     const isImage = message.image || message.quoted?.image;
@@ -253,11 +253,11 @@ Command({
     }
 });
 
+
 Command({
     pattern: 'resize ?(.*)',
     desc: lang.plugins.resize.desc,
-    type: 'media'
-    
+    type: 'media'    
 }, async (message, match) => {
     if (!message.video && !message.image && !message.quoted?.video && !message.quoted?.image) {
         return message.send(lang.plugins.resize.reply_required);
@@ -275,10 +275,11 @@ Command({
     }
 });
 
+
 Command({
     pattern: 'rotate ?(.*)',
     desc: lang.plugins.rotate.desc,
-    type: 'media'
+    type: 'media'  
 }, async (message, match) => {
     const isVideo = message.video || message.quoted?.video;
     const isImage = message.image || message.quoted?.image;

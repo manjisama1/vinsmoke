@@ -259,9 +259,6 @@
       "desc": "Get phone number with + prefix",
       "nouser": "No users found"
     },
-    "linkjid": {
-      "desc": "Get the JID of a group from invite link"
-    },
     "star": {
       "desc": "Star a replied message",
       "noQuoted": "Reply to a message to star it.",
@@ -285,6 +282,8 @@
     "antilink": {
       "desc": "Protect group from links",
       "usage": "*Usage:*\n> {0}antilink on/off, warn/delete/kick, allow/deny <link>, clear, info",
+      "notAllowed": "You must be an admin to manage antilink",
+      "botNotAdmin": "I need to be admin to manage antilink",
       "enabled": "Antilink enabled",
       "disabled": "Antilink disabled",
       "action": "Action set to: {0}",
@@ -300,6 +299,8 @@
     "antiword": {
       "desc": "Protect group from bad words",
       "usage": "*Usage:*\n> {0}antiword on/off, warn/delete/kick, allow/deny <words>, clear, info",
+      "notAllowed": "You must be an admin to manage antiword",
+      "botNotAdmin": "I need to be admin to manage antiword",
       "enabled": "Antiword enabled",
       "disabled": "Antiword disabled",
       "action": "Action set to: {0}",
@@ -321,7 +322,6 @@
       "notAllowed": "You must be an admin to ban/unban users",
       "botNotAdmin": "I need to be admin to ban/unban users",
       "cantBanBot": "Cannot ban the bot {0}",
-      "cantBanAdmin": "Cannot ban admin {0}",
       "bannedPerm": "{0} banned permanently",
       "bannedTemp": "{0} banned for {1}",
       "unbanned": "{0} unbanned",

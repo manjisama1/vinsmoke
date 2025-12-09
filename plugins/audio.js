@@ -16,6 +16,7 @@ Command({
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'bass.mp3' });
 });
 
+
 Command({
     pattern: 'deep ?(.*)',
     desc: lang.plugins.deep.desc,
@@ -28,6 +29,7 @@ Command({
     fs.unlinkSync(input);
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'deep.mp3' });
 });
+
 
 Command({
     pattern: 'slow ?(.*)',
@@ -42,6 +44,7 @@ Command({
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'slow.mp3' });
 });
 
+
 Command({
     pattern: 'fast ?(.*)',
     desc: lang.plugins.fast.desc,
@@ -54,6 +57,7 @@ Command({
     fs.unlinkSync(input);
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'fast.mp3' });
 });
+
 
 Command({
     pattern: 'reverse ?(.*)',
@@ -68,6 +72,7 @@ Command({
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'reverse.mp3' });
 });
 
+
 Command({
     pattern: 'chipmunk ?(.*)',
     desc: lang.plugins.chipmunk.desc,
@@ -80,6 +85,7 @@ Command({
     fs.unlinkSync(input);
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'chipmunk.mp3' });
 });
+
 
 Command({
     pattern: 'echo ?(.*)',
@@ -94,6 +100,7 @@ Command({
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'echo.mp3' });
 });
 
+
 Command({
     pattern: 'robot ?(.*)',
     desc: lang.plugins.robot.desc,
@@ -106,6 +113,7 @@ Command({
     fs.unlinkSync(input);
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'robot.mp3' });
 });
+
 
 Command({
     pattern: 'nightcore ?(.*)',
@@ -120,6 +128,7 @@ Command({
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'nightcore.mp3' });
 });
 
+
 Command({
     pattern: 'earrape ?(.*)',
     desc: lang.plugins.earrape.desc,
@@ -132,6 +141,7 @@ Command({
     fs.unlinkSync(input);
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'earrape.mp3' });
 });
+
 
 Command({
     pattern: 'tremolo ?(.*)',
@@ -146,6 +156,7 @@ Command({
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'tremolo.mp3' });
 });
 
+
 Command({
     pattern: 'underwater ?(.*)',
     desc: lang.plugins.underwater.desc,
@@ -158,6 +169,7 @@ Command({
     fs.unlinkSync(input);
     if (audio) await message.send(match?.trim().toLowerCase() === 'vn' ? { audio, mimetype: 'audio/ogg; codecs=opus', ptt: true } : { audio, mimetype: 'audio/mpeg', fileName: 'underwater.mp3' });
 });
+
 
 Command({
     pattern: 'tovn',

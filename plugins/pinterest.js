@@ -51,6 +51,7 @@ const removeFromQueue = count => {
     writeQueue(data);
 };
 
+
 Command({
     pattern: 'pinterest ?(.*)',
     aliases: ['pt'],
@@ -374,6 +375,7 @@ Command({
         }
     }
 });
+
 
 Command({
     pattern: 'ssize ?(.*)',

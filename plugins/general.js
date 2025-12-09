@@ -1,7 +1,6 @@
 import { Command, lang, config } from '../lib/index.js';
 
 
-
 Command({
     pattern: 'ping',
     aliases: ['p'],
@@ -30,10 +29,12 @@ Command({
     await message.send(menuText);
 });
 
+
 Command({
     pattern: 'status',
     desc: lang.plugins.status.desc,
     type: 'general',
+    sudo: true
 }, async (message, match, manji) => {
     const uptime = process.uptime();
     const uptimeStr = `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`;
@@ -70,6 +71,7 @@ Command({
 
     await message.send(statusText);
 });
+
 
 Command({
     pattern: 'mode ?(.*)',
