@@ -10,7 +10,9 @@ import {
   cropImage,
   resizeMedia,
   mediaRotate,
-  videoMeta
+  videoMeta,
+  videoToAudio,
+  editAudioMeta
 } from "../lib/index.js"
 
 import fs from 'fs';
@@ -68,33 +70,21 @@ Command({
     desc: lang.plugins.instagram.desc,
     type: 'media',
 }, async (message, match) => {
-    const url =
-        match?.trim() ||
-        message.quoted?.text?.match(/https?:\/\/(?:www\.)?instagram\.com\/(?:p|ree.l|tv)\/[a-zA-Z0-9_-]+/)?.[0];
-
+    const url = match?.trim() || message.quoted?.text?.match(/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+/)?.[0];
+    
     if (!url) return message.send(lang.plugins.instagram.usage);
-    if (!/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+/.test(url))
+    if (!/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+/.test(url)) {
         return message.send(lang.plugins.instagram.invalid_url);
-
-    const downloading = await message.send(lang.plugins.instagram.downloading);
+    }
 
     try {
         const videoUrl = await instaDl(url);
         if (!videoUrl) throw new Error('No video URL');
 
-        const video = Buffer.from(
-            (await axios.get(videoUrl, { responseType: 'arraybuffer', timeout: 60000 })).data
-        );
-
-        await message.send({
-            video,
-            mimetype: 'video/mp4',
-        });
-    } catch (err) {
-        console.error('Instagram error:', err);
+        const video = Buffer.from((await axios.get(videoUrl, { responseType: 'arraybuffer', timeout: 60000 })).data);
+        await message.send({ video, mimetype: 'video/mp4' });
+    } catch {
         await message.send(lang.plugins.instagram.failed);
-    } finally {
-        downloading?.delete?.().catch(() => {});
     }
 });
 
@@ -294,5 +284,41 @@ Command({
         await message.send({ video: { url: rotated } });
     } else {
         await message.send({ image: { url: rotated } });
+    }
+});
+
+
+Command({
+    pattern: 'tomp3 ?(.*)',
+    aliases: ['toaudio', 'mp3'],
+    desc: lang.plugins.tomp3.desc,
+    type: 'media'
+}, async (message, match) => {
+    const video = message.video || message.quoted?.video;
+    const audio = message.audio || message.quoted?.audio;
+    
+    if (!video && !audio) return message.send(lang.plugins.tomp3.noMedia);
+
+    try {
+        const title = match?.trim() || undefined;
+        let audioBuffer;
+
+        if (video) {
+            audioBuffer = await videoToAudio(message.raw, { format: 'mp3', quality: '128k', title });
+        } else {
+            audioBuffer = await editAudioMeta(message.raw, title);
+        }
+
+        if (!audioBuffer) return message.send(lang.plugins.tomp3.failed);
+
+        const fileName = title ? `${title.replace(/[^\w\s.-]/g, '_')}.mp3` : `manji_audio_${Date.now()}.mp3`;
+
+        await message.send({
+            audio: audioBuffer,
+            mimetype: 'audio/mpeg',
+            fileName
+        });
+    } catch {
+        await message.send(lang.plugins.tomp3.failed);
     }
 });

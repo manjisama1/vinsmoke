@@ -1,6 +1,6 @@
 {
   "name": "vinsmoke",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "WhatsApp bot built with Baileys",
   "type": "module",
   "main": "index.js",
@@ -16,6 +16,7 @@
     "audio-decode": "^2.2.3",
     "axios": "^1.6.0",
     "baileys": "^7.0.0-rc.9",
+    "better-sqlite3": "^12.5.0",
     "cheerio": "^1.1.2",
     "dotenv": "^16.4.7",
     "fluent-ffmpeg": "^2.1.3",

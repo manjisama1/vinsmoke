@@ -253,7 +253,7 @@ Command({
         count = null;
     }
 
-    if (!query) return message.send(lang.plugins.pinterest.no_query.format(manji.config.PREFIX));
+    if (!query) return message.send(lang.plugins.pinterest.no_query);
 
     const pinApi = manji.config.PIN_API || config.PIN_API || 'http://localhost:3000/scrape';
     let results = [];

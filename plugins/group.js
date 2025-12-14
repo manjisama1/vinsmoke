@@ -386,6 +386,7 @@ Command({
 
 Command({
     pattern: 'invite',
+    alliese: ['inv'],
     desc: lang.plugins.invite.desc,
     type: 'group',
     group: true,

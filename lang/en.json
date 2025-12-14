@@ -85,7 +85,7 @@
       "botNotAdmin": "I need to be admin to promote someone",
       "alreadyAdmin": "{0} is already an admin",
       "notMember": "{0} is not in the group",
-      "success": "{0} promoted to admin successfully",
+      "success": "Promoted {0}",
       "error": "Failed to promote {0}: {1}"
     },
     "demote": {
@@ -96,7 +96,7 @@
       "notAdmin": "{0} is not an admin",
       "cantDemoteSuper": "{0} is a superadmin, I can't demote them",
       "lastAdmin": "{0} is the last admin, can't demote",
-      "success": "{0} demoted successfully",
+      "success": "Demoted {0}",
       "error": "Failed to demote {0}: {1}"
     },
     "kick": {
@@ -108,7 +108,7 @@
       "cantKickSuper": "{0} is a superadmin, I can't kick them",
       "cantKickAdmin": "{0} is an admin, I can't kick them without superadmin rights",
       "cantKickSelf": "I can't kick myself {0}",
-      "success": "{0} has been kicked from the group",
+      "success": "Kicked {0}",
       "error": "Failed to kick {0}: {1}"
     },
     "add": {
@@ -117,7 +117,7 @@
       "notAllowed": "You must be an admin to add users",
       "botNotAdmin": "I need to be admin to add someone",
       "alreadyMember": "{0} is already in the group",
-      "success": "{0} has been added to the group",
+      "success": "Added {0}",
       "error": "Failed to add {0}: {1}"
     },
     "open": {
@@ -370,7 +370,6 @@
     "instagram": {
       "desc": "Download Instagram videos",
       "usage": "*Usage:*\n> .insta <link> or reply to an Instagram link",
-      "downloading": "📹 Downloading video...",
       "failed": "Failed to download video",
       "invalid_url": "Invalid Instagram URL"
     },
@@ -635,6 +634,15 @@
       "desc": "Percentage calculator", 
       "usage": "*Usage:*\n> {0}percentage 500 120",
       "result": "*Percentage Calculator*\n\n{0} of {1} = {2}%"
+    },
+    "tomp3": {
+      "desc": "Convert video/audio to MP3 with metadata",
+      "noMedia": "Reply to a video or audio file",
+      "failed": "Failed to process audio"
+    },
+    "ws": {
+      "desc": "Create WhatsApp chat screenshot",
+      "noText": "Reply to a message"
     }
   }
 }

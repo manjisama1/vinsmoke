@@ -7,6 +7,8 @@ import {
     tgStk,
     lang,
     Tracker,
+    waChatss,
+    formatTime
 } from '../lib/index.js';
 import fs from 'fs';
 
@@ -194,5 +196,34 @@ Command({
     } catch (err) {
         console.error('CS error:', err);
         await message.send(lang.plugins.cs.error);
+    }
+});
+
+
+Command({
+    pattern: 'ws ?(.*)',
+    desc: lang.plugins.ws.desc,
+    type: 'sticker'
+
+}, async (message, match, manji) => {
+    const text = message.quoted?.text || match?.trim();
+    if (!text) return message.send(lang.plugins.ws.noText);
+    
+    try {
+        const senderName = message.quoted?.name || message.name || 'User';
+        const timeText = formatTime(message.quoted?.time || message.time);
+        const senderJid = message.quoted?.sender || message.sender;
+        
+        let profilePicUrl;
+        try { profilePicUrl = await manji.fetchProfilePic(senderJid); } catch {}
+        
+        const imagePath = await waChatss(text, senderName, timeText, profilePicUrl);
+        if (!imagePath) return;
+        
+        await message.send({ sticker: await sticker(imagePath) });
+        if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+        
+    } catch (error) {
+        console.error('WS:', error);
     }
 });
