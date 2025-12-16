@@ -1,41 +1,108 @@
-import fs from 'fs';
+import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Command, Tracker, lang } from '../lib/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbPath = path.join(__dirname, '../db/ban.json');
+const dbPath = path.join(__dirname, '../db/ban.db');
 let tracker = null;
 
-const db = {
-  load: () => {
-    try {
-      return fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath, 'utf8')) : {};
-    } catch { return {}; }
-  },
-  save: (data) => {
-    try { fs.writeFileSync(dbPath, JSON.stringify(data, null, 2)); } catch {}
-  }
-};
+class BanDB {
+    constructor() {
+        this.db = new Database(dbPath);
+        this.setupTables();
+        this.prepareStatements();
+    }
 
-const isBanned = (groupId, userId) => {
-  const data = db.load();
-  const ban = data[groupId]?.users?.[userId];
-  if (!ban?.banned) return false;
+    setupTables() {
+        this.db.exec(`
+            CREATE TABLE IF NOT EXISTS bans (
+                chat_id TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                banned INTEGER DEFAULT 0,
+                permanent INTEGER DEFAULT 0,
+                banned_at INTEGER,
+                banned_by TEXT,
+                until_time INTEGER,
+                duration INTEGER,
+                unbanned_at INTEGER,
+                unbanned_by TEXT,
+                auto_unbanned_at INTEGER,
+                PRIMARY KEY(chat_id, user_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_bans_chat ON bans(chat_id);
+            CREATE INDEX IF NOT EXISTS idx_bans_banned ON bans(banned);
+        `);
+    }
 
-  if (ban.permanent || (ban.until && Date.now() < ban.until)) return true;
+    prepareStatements() {
+        this.stmts = {
+            getBan: this.db.prepare('SELECT * FROM bans WHERE chat_id = ? AND user_id = ?'),
+            setBan: this.db.prepare(`INSERT OR REPLACE INTO bans 
+                (chat_id, user_id, banned, permanent, banned_at, banned_by, until_time, duration) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`),
+            unban: this.db.prepare(`UPDATE bans SET banned = 0, unbanned_at = ?, unbanned_by = ? 
+                WHERE chat_id = ? AND user_id = ?`),
+            autoUnban: this.db.prepare(`UPDATE bans SET banned = 0, auto_unbanned_at = ? 
+                WHERE chat_id = ? AND user_id = ?`),
+            getBannedUsers: this.db.prepare('SELECT * FROM bans WHERE chat_id = ? AND banned = 1'),
+            getUnbannedUsers: this.db.prepare(`SELECT * FROM bans WHERE chat_id = ? AND banned = 0 
+                AND (unbanned_at IS NOT NULL OR auto_unbanned_at IS NOT NULL)`),
+            getAllUsers: this.db.prepare('SELECT * FROM bans WHERE chat_id = ?'),
+            clearBans: this.db.prepare('DELETE FROM bans WHERE chat_id = ?')
+        };
+    }
 
-  if (ban.until && Date.now() >= ban.until) {
-    ban.banned = false;
-    ban.autoUnbannedAt = Date.now();
-    db.save(data);
-  }
-  return false;
-};
+    isBanned(chatId, userId) {
+        const ban = this.stmts.getBan.get(chatId, userId);
+        if (!ban || !ban.banned) return false;
+
+        if (ban.permanent || (ban.until_time && Date.now() < ban.until_time)) return true;
+
+        if (ban.until_time && Date.now() >= ban.until_time) {
+            this.stmts.autoUnban.run(Date.now(), chatId, userId);
+            return false;
+        }
+        return false;
+    }
+
+    banUser(chatId, userId, bannedBy, duration = null) {
+        const permanent = !duration;
+        const untilTime = duration ? Date.now() + duration : null;
+        this.stmts.setBan.run(chatId, userId, 1, permanent ? 1 : 0, Date.now(), bannedBy, untilTime, duration);
+    }
+
+    unbanUser(chatId, userId, unbannedBy) {
+        this.stmts.unban.run(Date.now(), unbannedBy, chatId, userId);
+    }
+
+    getBannedUsers(chatId) {
+        return this.stmts.getBannedUsers.all(chatId);
+    }
+
+    getUnbannedUsers(chatId) {
+        return this.stmts.getUnbannedUsers.all(chatId);
+    }
+
+    getUserBan(chatId, userId) {
+        return this.stmts.getBan.get(chatId, userId);
+    }
+
+    clearAllBans(chatId) {
+        const result = this.stmts.clearBans.run(chatId);
+        return result.changes;
+    }
+
+    close() {
+        this.db.close();
+    }
+}
+
+const db = new BanDB();
 
 const filter = (msg) => {
   if (!msg.isGroup || msg.fromMe) return false;
-  return isBanned(msg.chat, msg.sender);
+  return db.isBanned(msg.chat, msg.sender);
 };
 
 const action = async (msg) => {
@@ -63,56 +130,41 @@ Command({
   const cmd = args[0]?.toLowerCase();
 
   if (cmd === 'clear') {
-    const data = db.load();
-    const users = data[message.chat]?.users;
-    if (!users || !Object.keys(users).length) return message.send(lang.plugins.ban.noBans);
-    const count = Object.keys(users).length;
-    delete data[message.chat];
-    db.save(data);
+    const count = db.clearAllBans(message.chat);
+    if (!count) return message.send(lang.plugins.ban.noBans);
     return message.send(lang.plugins.ban.cleared.format(count));
   }
 
   if (cmd === 'list') {
-    const data = db.load();
-    const users = data[message.chat]?.users;
-    if (!users || !Object.keys(users).length) return message.send(lang.plugins.ban.noBans);
+    const users = db.getBannedUsers(message.chat);
+    if (!users.length) return message.send(lang.plugins.ban.noBans);
 
     let list = lang.plugins.ban.listHeader;
     let mentions = [];
     let index = 1;
 
-    for (const [userId, banData] of Object.entries(users)) {
-      if (!banData.banned) continue;
-      const tag = `@${manji.jidToNum(userId)}`;
-      mentions.push(userId);
+    for (const banData of users) {
+      if (!db.isBanned(message.chat, banData.user_id)) continue;
+      const tag = `@${manji.jidToNum(banData.user_id)}`;
+      mentions.push(banData.user_id);
 
       if (banData.permanent) {
         list += lang.plugins.ban.listItemPerm.format(index, tag);
-      } else if (banData.until && Date.now() < banData.until) {
-        const remaining = manji.formatTime(banData.until - Date.now());
+      } else if (banData.until_time && Date.now() < banData.until_time) {
+        const remaining = manji.formatTime(banData.until_time - Date.now());
         list += lang.plugins.ban.listItemTemp.format(index, tag, remaining);
       } else {
-        banData.banned = false;
-        banData.autoUnbannedAt = Date.now();
         continue;
       }
       index++;
     }
 
-    if (index === 1) {
-      db.save(data);
-      return message.send(lang.plugins.ban.noBans);
-    }
-
-    db.save(data);
+    if (index === 1) return message.send(lang.plugins.ban.noBans);
     return message.send(list, { mentions });
   }
 
   const users = await manji.getUserJid(message, match);
   if (!users.length) return message.send(lang.plugins.ban.noUser);
-
-  const data = db.load();
-  if (!data[message.chat]) data[message.chat] = { users: {} };
 
   const timeMatch = match?.match(/(\d+[smhd])+/gi);
   const duration = timeMatch ? manji.parseTime(timeMatch.join('')) : null;
@@ -126,20 +178,7 @@ Command({
       continue;
     }
 
-    const banData = {
-      ...data[message.chat].users[user],
-      banned: true,
-      bannedAt: Date.now(),
-      bannedBy: message.sender,
-      permanent: !duration
-    };
-
-    if (duration) {
-      banData.until = Date.now() + duration;
-      banData.duration = duration;
-    }
-
-    data[message.chat].users[user] = banData;
+    db.banUser(message.chat, user, message.sender, duration);
 
     const timeText = duration ? manji.formatTime(duration) : null;
     results.push(timeText ?
@@ -148,7 +187,6 @@ Command({
     );
   }
 
-  db.save(data);
   await message.send(results.join('\n'), { mentions: users });
 });
 
@@ -165,26 +203,24 @@ Command({
   const cmd = args[0]?.toLowerCase();
 
   if (cmd === 'list') {
-    const data = db.load();
-    const users = data[message.chat]?.users;
-    if (!users || !Object.keys(users).length) return message.send(lang.plugins.ban.noUnbans);
+    const users = db.getUnbannedUsers(message.chat);
+    if (!users.length) return message.send(lang.plugins.ban.noUnbans);
 
     let list = lang.plugins.ban.unbanListHeader;
     let mentions = [];
     let index = 1;
 
-    for (const [userId, banData] of Object.entries(users)) {
-      if (banData.banned || (!banData.unbannedAt && !banData.autoUnbannedAt)) continue;
-      const tag = `@${manji.jidToNum(userId)}`;
-      mentions.push(userId);
+    for (const banData of users) {
+      const tag = `@${manji.jidToNum(banData.user_id)}`;
+      mentions.push(banData.user_id);
 
-      if (banData.unbannedAt && banData.unbannedBy) {
-        const unbannedByTag = `@${manji.jidToNum(banData.unbannedBy)}`;
-        mentions.push(banData.unbannedBy);
-        const unbannedDate = new Date(banData.unbannedAt).toLocaleDateString();
+      if (banData.unbanned_at && banData.unbanned_by) {
+        const unbannedByTag = `@${manji.jidToNum(banData.unbanned_by)}`;
+        mentions.push(banData.unbanned_by);
+        const unbannedDate = new Date(banData.unbanned_at).toLocaleDateString();
         list += lang.plugins.ban.unbanListItemManual.format(index, tag, unbannedByTag, unbannedDate);
-      } else if (banData.autoUnbannedAt) {
-        const autoUnbannedDate = new Date(banData.autoUnbannedAt).toLocaleDateString();
+      } else if (banData.auto_unbanned_at) {
+        const autoUnbannedDate = new Date(banData.auto_unbanned_at).toLocaleDateString();
         list += lang.plugins.ban.unbanListItemAuto.format(index, tag, autoUnbannedDate);
       }
       index++;
@@ -197,26 +233,19 @@ Command({
   const users = await manji.getUserJid(message, match);
   if (!users.length) return message.send(lang.plugins.ban.noUser);
 
-  const data = db.load();
-  if (!data[message.chat]?.users) return message.send(lang.plugins.ban.noBans);
-
   const results = [];
   for (const user of users) {
     const tag = `@${manji.jidToNum(user)}`;
-    const banData = data[message.chat].users[user];
-
-    if (!banData?.banned) {
+    
+    if (!db.isBanned(message.chat, user)) {
       results.push(lang.plugins.ban.notBanned.format(tag));
       continue;
     }
 
-    banData.banned = false;
-    banData.unbannedAt = Date.now();
-    banData.unbannedBy = message.sender;
+    db.unbanUser(message.chat, user, message.sender);
     results.push(lang.plugins.ban.unbanned.format(tag));
   }
 
-  db.save(data);
   await message.send(results.join('\n'), { mentions: users });
 });
 
@@ -229,38 +258,32 @@ Command({
   const users = await manji.getUserJid(message, match);
   if (!users.length) return message.send(lang.plugins.ban.noUser);
 
-  const data = db.load();
-  const groupBans = data[message.chat];
-  if (!groupBans?.users) return message.send(lang.plugins.ban.noBans);
-
   const results = [];
   const mentions = [];
 
   for (const user of users) {
     const tag = `@${manji.jidToNum(user)}`;
-    const banData = groupBans.users[user];
+    const banData = db.getUserBan(message.chat, user);
 
-    if (!banData?.banned) {
+    if (!banData || !db.isBanned(message.chat, user)) {
       results.push(lang.plugins.ban.notBanned.format(tag));
       continue;
     }
 
-    mentions.push(user, banData.bannedBy);
+    mentions.push(user, banData.banned_by);
 
-    const bannedByTag = `@${manji.jidToNum(banData.bannedBy)}`;
-    const bannedDate = new Date(banData.bannedAt).toLocaleString();
+    const bannedByTag = `@${manji.jidToNum(banData.banned_by)}`;
+    const bannedDate = new Date(banData.banned_at).toLocaleString();
 
     let info = lang.plugins.ban.whobanInfo.format(tag, bannedByTag, bannedDate);
 
     if (banData.permanent) {
       info += lang.plugins.ban.whobanPerm;
-    } else if (banData.until && Date.now() < banData.until) {
-      const remaining = manji.formatTime(banData.until - Date.now());
+    } else if (banData.until_time && Date.now() < banData.until_time) {
+      const remaining = manji.formatTime(banData.until_time - Date.now());
       const totalDuration = manji.formatTime(banData.duration);
       info += lang.plugins.ban.whobanTemp.format(remaining, totalDuration);
     } else {
-      banData.banned = false;
-      banData.autoUnbannedAt = Date.now();
       results.push(lang.plugins.ban.notBanned.format(tag));
       continue;
     }
@@ -268,7 +291,6 @@ Command({
     results.push(info);
   }
 
-  db.save(data);
   await message.send(results.join('\n\n'), { mentions: [...new Set(mentions)] });
 });
 
@@ -281,18 +303,14 @@ Command({
   const users = await manji.getUserJid(message, match);
   if (!users.length) return message.send(lang.plugins.ban.noUser);
 
-  const data = db.load();
-  const groupBans = data[message.chat];
-  if (!groupBans?.users) return message.send(lang.plugins.ban.noBans);
-
   const results = [];
   const mentions = [];
 
   for (const user of users) {
     const tag = `@${manji.jidToNum(user)}`;
-    const banData = groupBans.users[user];
+    const banData = db.getUserBan(message.chat, user);
 
-    if (!banData || (!banData.unbannedAt && !banData.autoUnbannedAt)) {
+    if (!banData || (!banData.unbanned_at && !banData.auto_unbanned_at)) {
       results.push(lang.plugins.ban.neverUnbanned.format(tag));
       continue;
     }
@@ -300,13 +318,13 @@ Command({
     mentions.push(user);
     let info = lang.plugins.ban.whounbanInfo.format(tag);
 
-    if (banData.unbannedAt && banData.unbannedBy) {
-      mentions.push(banData.unbannedBy);
-      const unbannedByTag = `@${manji.jidToNum(banData.unbannedBy)}`;
-      const unbannedDate = new Date(banData.unbannedAt).toLocaleString();
+    if (banData.unbanned_at && banData.unbanned_by) {
+      mentions.push(banData.unbanned_by);
+      const unbannedByTag = `@${manji.jidToNum(banData.unbanned_by)}`;
+      const unbannedDate = new Date(banData.unbanned_at).toLocaleString();
       info += lang.plugins.ban.whounbanManual.format(unbannedByTag, unbannedDate);
-    } else if (banData.autoUnbannedAt) {
-      const autoUnbannedDate = new Date(banData.autoUnbannedAt).toLocaleString();
+    } else if (banData.auto_unbanned_at) {
+      const autoUnbannedDate = new Date(banData.auto_unbanned_at).toLocaleString();
       info += lang.plugins.ban.whounbanAuto.format(autoUnbannedDate);
     }
 
