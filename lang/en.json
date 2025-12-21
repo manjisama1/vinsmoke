@@ -651,6 +651,18 @@
       "desc": "YouTube Video download",
       "no_url": "Provide a valid YouTube URL",
       "fail": "Failed to process video"
+    },
+    "play": {
+        "desc": "Search YouTube and select via poll",
+        "no_query": "Provide a search query or quote text",
+        "usage": "Usage:\n.play [query]\nReply to text with .play",
+        "searching": "Searching: {0}",
+        "no_results": "No results found for: {0}",
+        "poll_title": "Select song: {0}",
+        "processing": "Processing selection:\nTitle: {0}\nAuthor: {1}\nDuration: {2}\nViews: {3}\n\nDownloading audio...",
+        "success_caption": "Title: {0}\nAuthor: {1}\nDuration: {2}\nViews: {3}\nQuery: {4}",
+        "download_failed": "Download failed: {0}\nError: {1}",
+        "search_failed": "Search failed: {0}"
     }
   }
 }
