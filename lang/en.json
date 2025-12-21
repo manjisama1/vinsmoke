@@ -641,6 +641,16 @@
     "ws": {
       "desc": "Create WhatsApp chat screenshot",
       "noText": "Reply to a message"
+    },
+    "yta": {
+      "desc": "YouTube Audio download",
+      "no_url": "Provide a valid YouTube URL",
+      "fail": "Failed to process audio"
+    },
+    "ytv": {
+      "desc": "YouTube Video download",
+      "no_url": "Provide a valid YouTube URL",
+      "fail": "Failed to process video"
     }
   }
 }

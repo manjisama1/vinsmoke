@@ -1,6 +1,7 @@
 import {
   Command,
   lang,
+  cleanup,
   spotifyDl,
   instaDl,
   downLoad,
@@ -17,6 +18,7 @@ import {
 
 import fs from 'fs';
 import axios from 'axios';
+import ffmpeg from 'fluent-ffmpeg';
 
 
 Command({
@@ -176,92 +178,81 @@ Command({
     }
 });
 
-
 Command({
     pattern: 'crop ?(.*)',
     desc: lang.plugins.crop.desc,
     type: 'media'
 }, async (message, match) => {
-    const isVideo = message.video || message.quoted?.video;
-    const isImage = message.image || message.quoted?.image;
-
-    if (!isVideo && !isImage) return message.send(lang.plugins.crop.reply_required);
+    const target = message.video || message.image || message.quoted?.video || message.quoted?.image;
+    if (!target) return message.send(lang.plugins.crop.reply_required);
 
     if (!match) {
-        if (isVideo) {
-            const meta = await videoMeta(message.raw);
-            if (!meta) return message.send(lang.plugins.crop.failed_info);
-            return message.send(`${meta.width}x${meta.height}`);
-        } else {
-            const mediaData = await downLoad(message.raw, 'both');
-            if (!mediaData) return message.send(lang.plugins.crop.failed_info);
-            const { Jimp } = await import('jimp');
-            const img = await Jimp.read(mediaData.buffer);
-            return message.send(`${img.bitmap.width}x${img.bitmap.height}`);
-        }
+        const data = await downLoad(message.raw, 'both');
+        return new Promise((res) => {
+            ffmpeg(data.path).ffprobe((err, meta) => {
+                if (err) return message.send(lang.plugins.crop.failed_info);
+                const { width, height } = meta.streams[0];
+                message.send(`*Dimensions:* ${width}x${height}`);
+                cleanup([data.path]);
+                res();
+            });
+        });
     }
 
     const input = match.trim();
-    let options = {};
+    let options = { returnPath: true };
 
     if (input.includes('-')) {
-        const [dimension, coords] = input.split('-').map(s => s.trim());
+        const [dim, coords] = input.split('-');
         const [x, y] = coords.split(',').map(Number);
-        
-        if (dimension.includes(':')) {
-            options.ratio = dimension;
-        } else {
-            const [w, h] = dimension.split('x').map(Number);
-            options.width = w;
-            options.height = h;
-        }
+        if (dim.includes(':')) options.ratio = dim;
+        else [options.width, options.height] = dim.split('x').map(Number);
         options.x = x;
         options.y = y;
     } else {
-        if (input.includes(':')) {
-            options.ratio = input;
-        } else {
-            const [w, h] = input.split('x').map(Number);
-            options.width = w;
-            options.height = h;
-        }
+        if (input.includes(':')) options.ratio = input;
+        else [options.width, options.height] = input.split('x').map(Number);
     }
 
-    if (isVideo) {
-        const videoPath = await downLoad(message.raw, 'path');
-        if (!videoPath) return message.send(lang.plugins.crop.failed_download);
+    if (!resultPath) return message.send(lang.plugins.crop.failed);
 
-        const croppedPath = await cropVideo(videoPath, options);
-        if (!croppedPath) return message.send(lang.plugins.crop.failed);
-
-        await message.send({ video: { url: croppedPath } });
-    } else {
-        const croppedPath = await cropImage(message.raw, options);
-        if (!croppedPath) return message.send(lang.plugins.crop.failed);
-
-        await message.send({ image: { url: croppedPath } });
+    try {
+        const isVideo = message.video || message.quoted?.video;
+        if (isVideo) {
+            await message.send({ video: { url: resultPath } });
+        } else {
+            await message.send({ image: { url: resultPath } });
+        }
+    } finally {
+        if (fs.existsSync(resultPath)) fs.unlinkSync(resultPath);
     }
 });
-
 
 Command({
     pattern: 'resize ?(.*)',
     desc: lang.plugins.resize.desc,
     type: 'media'    
 }, async (message, match) => {
-    if (!message.video && !message.image && !message.quoted?.video && !message.quoted?.image) {
-        return message.send(lang.plugins.resize.reply_required);
-    }
-
+    const target = message.video || message.image || message.quoted?.video || message.quoted?.image;
+    if (!target) return message.send(lang.plugins.resize.reply_required);
     if (!match) return message.send(lang.plugins.resize.usage);
 
-    const resizedPath = await resizeMedia(message.raw, match.trim());
+    const parts = match.trim().split(/\s+/);
+    const size = parts[0];
+    const fitMode = parts[1] || 'contain';
+
+    const resizedPath = await resizeMedia(message.raw, size, { fit: fitMode });
+    
     if (!resizedPath) return message.send(lang.plugins.resize.failed);
 
-    if (message.video || message.quoted?.video) {
-        await message.send({ video: { url: resizedPath } });
-    } else {
-        await message.send({ image: { url: resizedPath } });
+    try {
+        if (message.video || message.quoted?.video) {
+            await message.send({ video: { url: resizedPath } });
+        } else {
+            await message.send({ image: { url: resizedPath } });
+        }
+    } finally {
+        if (fs.existsSync(resizedPath)) fs.unlinkSync(resizedPath);
     }
 });
 
