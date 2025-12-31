@@ -269,16 +269,6 @@
       "noQuoted": "Reply to a message to unstar it.",
       "error": "Failed to unstar message: {0}"
     },
-    "asteal": {
-      "desc": "Auto-steal stickers",
-      "on": "ON: {0}",
-      "off": "OFF: {0}",
-      "status": "Enabled: {0}\nQueue: {1}\n{2}",
-      "cleared": "Cleared",
-      "usage": "*Usage:*\n> {0} asteal on/off/status/clear",
-      "none": "None",
-      "group": "Group"
-    },
     "antilink": {
       "desc": "Manage link protection",
       "usage": "*Usage:* {0}antilink on/off | warn/delete/kick | allow/deny <links> | clear | info",

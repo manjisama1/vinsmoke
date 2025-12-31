@@ -5,18 +5,21 @@ const type = 'link';
 Anti.register(type, {
     detect: (msg, cfg) => {
         const links = msg.text.match(/(?:https?:\/\/)?(?:www\.)?[\w-]+\.[a-z]{2,}/gi) || [];
-        const normalize = (l) => l.toLowerCase().replace(/https?:\/\/|www\./g, '').replace(/\/$/, '');
+        const normalize = l => l.toLowerCase().replace(/https?:\/\/|www\./g, '').replace(/\/$/, '');
         return links.some(l => !cfg.allow.map(normalize).includes(normalize(l)));
     },
     onAction: async (msg, res) => {
-        const user = msg.sender.split('@')[0];
         const { status, count, limit } = res;
+        if (['no_permission', 'error'].includes(status)) return;
+
+        const user = msg.sender.split('@')[0];
+        const mentions = { mentions: [msg.sender] };
+
+        if (status === 'warned') 
+            return await msg.send(lang.plugins.antilink.warning.format(user, count, limit), mentions);
         
-        if (status === 'warned') {
-            await msg.send(lang.plugins.antilink.warning.format(user, count, limit), { mentions: [msg.sender] });
-        } else if (status === 'kicked' || status === 'kicked_warn') {
-            await msg.send(lang.plugins.antilink.kickedLink.format(user), { mentions: [msg.sender] });
-        }
+        if (['kicked', 'kicked_warn'].includes(status)) 
+            return await msg.send(lang.plugins.antilink.kickedLink.format(user), mentions);
     }
 });
 
@@ -26,69 +29,58 @@ Command({
     type: 'group',
     group: true
 }, async (message, match, manji) => {
-    if (!await manji.isBotAdmin(message.chat)) {
+    if (!await manji.isBotAdmin(message.chat)) 
         return await message.send(lang.plugins.antilink.botNotAdmin);
-    }
-    
-    if (!message.fromMe && !await message.admin()) {
+
+    if (!message.fromMe && !await message.admin()) 
         return await message.send(lang.plugins.antilink.notAllowed);
-    }
 
     const [cmd, ...args] = (match || '').trim().split(/\s+/);
-    if (!cmd) {
-        return await message.send(lang.plugins.antilink.usage.format(config.PREFIX));
+    if (!cmd) return await message.send(lang.plugins.antilink.usage.format(config.PREFIX));
+
+    const command = cmd.toLowerCase();
+
+    if (command === 'on') {
+        Anti.updateSettings(message.chat, type, 'enabled', 1);
+        return await message.send(lang.plugins.antilink.enabled);
     }
 
-    switch (cmd.toLowerCase()) {
-        case 'on':
-        case 'off':
-            Anti.updateSettings(message.chat, type, 'enabled', cmd === 'on' ? 1 : 0);
-            await message.send(
-                cmd === 'on' 
-                    ? lang.plugins.antilink.enabled 
-                    : lang.plugins.antilink.disabled
-            );
-            break;
-
-        case 'kick':
-        case 'warn':
-        case 'delete':
-            Anti.updateSettings(message.chat, type, 'action', cmd);
-            await message.send(lang.plugins.antilink.action.format(cmd));
-            break;
-
-        case 'allow':
-        case 'deny':
-            const links = args.join('').split(',').filter(Boolean);
-            if (!links.length) {
-                return await message.send(lang.plugins.antilink.linkUsage.format(config.PREFIX, cmd));
-            }
-            
-            Anti.manageFilters(message.chat, type, cmd, links, 'set');
-            await message.send(lang.plugins.antilink.links.format(cmd, links.join(', ')));
-            break;
-
-        case 'info':
-            const info = Anti.getData(message.chat, type);
-            const infoText = lang.plugins.antilink.info.format(
-                info.enabled ? 'ON' : 'OFF',
-                info.action,
-                info.allow.join(', ') || 'none',
-                info.deny.join(', ') || 'none'
-            );
-            await message.send(infoText);
-            break;
-
-        case 'clear':
-            Anti.updateSettings(message.chat, type, 'enabled', 0);
-            Anti.updateSettings(message.chat, type, 'action', 'delete');
-            Anti.manageFilters(message.chat, type, 'allow', [], 'set');
-            Anti.manageFilters(message.chat, type, 'deny', [], 'set');
-            await message.send(lang.plugins.antilink.cleared);
-            break;
-
-        default:
-            await message.send(lang.plugins.antilink.invalid);
-            break;
+    if (command === 'off') {
+        Anti.updateSettings(message.chat, type, 'enabled', 0);
+        return await message.send(lang.plugins.antilink.disabled);
     }
+
+    if (['kick', 'warn', 'delete'].includes(command)) {
+        Anti.updateSettings(message.chat, type, 'action', command);
+        return await message.send(lang.plugins.antilink.action.format(command));
+    }
+
+    if (['allow', 'deny'].includes(command)) {
+        const links = args.join('').split(',').filter(Boolean);
+        if (!links.length) 
+            return await message.send(lang.plugins.antilink.linkUsage.format(config.PREFIX, command));
+        
+        Anti.manageFilters(message.chat, type, command, links, 'set');
+        return await message.send(lang.plugins.antilink.links.format(command, links.join(', ')));
+    }
+
+    if (command === 'info') {
+        const info = Anti.getData(message.chat, type);
+        return await message.send(lang.plugins.antilink.info.format(
+            info.enabled ? 'ON' : 'OFF',
+            info.action,
+            info.allow.join(', ') || 'none',
+            info.deny.join(', ') || 'none'
+        ));
+    }
+
+    if (command === 'clear') {
+        Anti.updateSettings(message.chat, type, 'enabled', 0);
+        Anti.updateSettings(message.chat, type, 'action', 'delete');
+        Anti.manageFilters(message.chat, type, 'allow', [], 'set');
+        Anti.manageFilters(message.chat, type, 'deny', [], 'set');
+        return await message.send(lang.plugins.antilink.cleared);
+    }
+
+    await message.send(lang.plugins.antilink.invalid);
 });

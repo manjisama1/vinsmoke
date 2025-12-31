@@ -6,33 +6,13 @@ import {
     exif,
     tgStk,
     lang,
+    config,
     Tracker,
     waChatss,
     formatTime
 } from '../lib/index.js';
+
 import fs from 'fs';
-
-const st = { chats: new Set(), q: [], tid: null, proc: false };
-
-const proc = async () => {
-    if (st.proc || !st.q.length) return;
-    st.proc = true;
-    try {
-        while (st.q.length) {
-            const { raw, msg } = st.q.shift();
-            const buf = await sticker(raw).catch(() => null);
-            if (buf) {
-                for (const chat of st.chats) {
-                    await msg.send({ sticker: buf }, {}, chat).catch(() => {});
-                }
-            }
-        }
-    } finally {
-        st.proc = false;
-    }
-};
-
-const name = (id) => id.endsWith('@g.us') ? lang.plugins.asteal.group : id.split('@')[0];
 
 
 Command({
@@ -75,57 +55,6 @@ Command({
     }
 
     await message.send({ sticker: stickerBuffer });
-});
-
-
-Command({
-    pattern: 'asteal ?(.*)',
-    aliases: ['atake'],
-    desc: lang.plugins.asteal.desc,
-    type: 'sticker',
-}, async (message, match) => {
-    const [act, tgt] = (match || '').trim().split(/\s+/);
-    const chat = tgt || message.chat;
-
-    switch (act?.toLowerCase()) {
-        case 'on':
-            st.chats.add(chat);
-            if (!st.tid) {
-                st.tid = Tracker.register(
-                    (msg) => msg.media?.type === 'sticker' && !msg.fromMe && !st.chats.has(msg.chat),
-                    async (msg) => {
-                        st.q.push({ raw: msg.raw, msg });
-                        await proc();
-                    },
-                    { name: 'StickerSteal' }
-                );
-            }
-            return message.send(lang.plugins.asteal.on.format(name(chat)));
-
-        case 'off':
-            st.chats.delete(chat);
-            if (!st.chats.size && st.tid) {
-                Tracker.unregister(st.tid);
-                st.tid = null;
-            }
-            return message.send(lang.plugins.asteal.off.format(name(chat)));
-
-        case 'status':
-            const list = [...st.chats].map(name).join(', ') || lang.plugins.asteal.none;
-            return message.send(lang.plugins.asteal.status.format(st.chats.size, st.q.length, list));
-
-        case 'clear':
-            st.chats.clear();
-            st.q = [];
-            if (st.tid) {
-                Tracker.unregister(st.tid);
-                st.tid = null;
-            }
-            return message.send(lang.plugins.asteal.cleared);
-
-        default:
-            return message.send(lang.plugins.asteal.usage.format(config.PREFIX));
-    }
 });
 
 
