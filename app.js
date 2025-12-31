@@ -5,12 +5,7 @@ import os from 'os';
 import path from 'path';
 
 const execAsync = promisify(exec);
-
-const time = () => {
-  const d = new Date();
-  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}.${d.getMilliseconds().toString().padStart(3, '0')}`;
-};
-
+const time = () => new Date().toTimeString().slice(0, 12);
 const c = { g: '\x1b[90m', c: '\x1b[36m', gr: '\x1b[32m', y: '\x1b[33m', r: '\x1b[31m', x: '\x1b[0m' };
 
 const log = {
@@ -40,26 +35,32 @@ const isTermux = () => Boolean(process.env.TERMUX_VERSION || process.env.ANDROID
 const check = async (cmd, install, name) => {
   log.i(`Checking ${name || cmd}...`);
   const ok = await run(cmd);
+  
   if (ok.ok) {
     log.s(`${name || cmd}: ${ok.out}`);
     return true;
   }
+  
   if (!install) {
     log.w(`${name || cmd} not found`);
     return false;
   }
+  
   const platform = os.platform();
-  if (platform === 'linux' || platform === 'darwin') {
-    log.w(`${name || cmd} not found, installing...`);
-    const installed = await stream('sh', ['-c', install]);
-    if (installed) {
-      log.s(`${name || cmd} installed`);
-      return true;
-    }
-    log.w(`Install failed for ${name || cmd}`);
+  if (!['linux', 'darwin'].includes(platform)) {
+    log.w(`${name || cmd} not found on ${platform}`);
     return false;
   }
-  log.w(`${name || cmd} not found on ${platform}`);
+  
+  log.w(`${name || cmd} not found, installing...`);
+  const installed = await stream('sh', ['-c', install]);
+  
+  if (installed) {
+    log.s(`${name || cmd} installed`);
+    return true;
+  }
+  
+  log.w(`Install failed for ${name || cmd}`);
   return false;
 };
 
@@ -69,11 +70,13 @@ const ensureNode = async () => {
     log.e('Node.js not found');
     return false;
   }
+  
   const major = parseInt(res.out.replace(/^v/, '').split('.')[0], 10);
   if (isNaN(major) || major < 20) {
     log.e(`Node.js ${res.out} detected. Requires 20+`);
     return false;
   }
+  
   log.s(`Node.js ${res.out}`);
   return true;
 };
@@ -86,6 +89,7 @@ const ensureFfmpeg = async () => {
     log.w('ffmpeg not found');
     return false;
   }
+  
   const version = res.out.split('\n')[0].match(/ffmpeg version ([\d.]+)/)?.[1] || 'unknown';
   log.s(`ffmpeg ${version}`);
   return true;
@@ -97,61 +101,91 @@ const ensurePm2 = async () => {
     log.s(`PM2 ${ok.out}`);
     return true;
   }
+  
   log.w('PM2 not found, installing locally...');
   const installed = await stream('npm', ['install', 'pm2', '--no-fund', '--no-audit']);
-  if (installed) {
-    const check = await run('npx pm2 -v');
-    if (check.ok) {
-      log.s(`PM2 ${check.out} (npx)`);
-      return true;
-    }
+  
+  if (!installed) {
+    log.w('PM2 not available');
+    return false;
   }
+  
+  const check = await run('npx pm2 -v');
+  if (check.ok) {
+    log.s(`PM2 ${check.out} (npx)`);
+    return true;
+  }
+  
   log.w('PM2 not available');
   return false;
 };
 
 const cloneRepo = async () => {
   const repo = 'https://github.com/manjisama1/vinsmoke.git';
-  const tmp = '.vinsmoke_tmp';
-
-  if (fs.existsSync('index.js') && fs.existsSync('package.json')) {
-    log.i('Project files present, skipping clone');
+  const isGitRepo = await run('git rev-parse --is-inside-work-tree');
+  
+  if (isGitRepo.ok) {
+    log.i('Already in git repository, verifying remote...');
+    const remoteCheck = await run('git remote get-url origin');
+    
+    if (remoteCheck.ok && remoteCheck.out === repo) {
+      log.s('Git repository verified');
+      return true;
+    }
+    
+    if (remoteCheck.ok) {
+      log.w(`Different remote detected: ${remoteCheck.out}`);
+      const updateRemote = await run(`git remote set-url origin ${repo}`);
+      if (updateRemote.ok) {
+        log.s('Remote updated');
+        return true;
+      }
+    } else {
+      const addRemote = await run(`git remote add origin ${repo}`);
+      if (addRemote.ok) {
+        log.s('Remote added');
+        return true;
+      }
+    }
+    
+    log.w('Remote setup failed, continuing...');
     return true;
   }
 
-  if (fs.existsSync(tmp)) {
-    log.w('Removing previous temp repo...');
-    try { fs.rmSync(tmp, { recursive: true }); } catch {}
+  const isEmpty = fs.readdirSync('.').length === 0;
+  if (isEmpty) {
+    log.i('Cloning to empty directory...');
+    const cloneOk = await stream('git', ['clone', repo, '.']);
+    if (!cloneOk) {
+      log.e('Clone failed');
+      return false;
+    }
+    log.s('Repository cloned');
+    return true;
   }
 
-  log.i('Cloning repository...');
-  const ok = await stream('git', ['clone', repo, tmp]);
-  if (!ok) {
-    log.e('Clone failed');
+  log.i('Directory not empty, cloning to temp and moving...');
+  const tempDir = 'temp_clone_' + Date.now();
+  
+  const cloneOk = await stream('git', ['clone', repo, tempDir]);
+  if (!cloneOk) {
+    log.e('Clone to temp directory failed');
     return false;
   }
 
-  log.i('Moving files...');
-  const files = fs.readdirSync(tmp);
-  for (const f of files) {
-    const src = path.join(tmp, f);
-    const dest = path.join(process.cwd(), f);
-    try {
-      if (f === 'app.js') {
-        fs.renameSync(src, dest);
-        log.i('Updated app.js');
-      } else if (!fs.existsSync(dest)) {
-        fs.renameSync(src, dest);
-      } else {
-        log.i(`Skipping ${f}`);
-      }
-    } catch (e) {
-      log.w(`Failed to move ${f}: ${e.message}`);
-    }
+  const win = process.platform === 'win32';
+  const moveCmd = win 
+    ? `xcopy "${tempDir}\\*" . /E /I /H /Y >nul 2>&1 && rmdir /S /Q "${tempDir}"`
+    : `cp -rf "${tempDir}"/. . && rm -rf "${tempDir}"`;
+
+  const moveOk = await run(moveCmd);
+  if (!moveOk.ok) {
+    log.e('Failed to move files from temp directory');
+    await run(win ? `rmdir /S /Q "${tempDir}"` : `rm -rf "${tempDir}"`);
+    return false;
   }
 
-  try { fs.rmSync(tmp, { recursive: true }); } catch {}
-  log.s('Repository integrated');
+  log.s('Repository cloned and moved successfully');
   return true;
 };
 
@@ -160,7 +194,9 @@ const ensureConfig = () => {
     log.s('config.env exists');
     return;
   }
+  
   log.w('config.env not found, creating...');
+  
   if (fs.existsSync('config.env.example')) {
     try {
       fs.copyFileSync('config.env.example', 'config.env');
@@ -170,6 +206,7 @@ const ensureConfig = () => {
       log.w(`Copy failed: ${e.message}`);
     }
   }
+  
   fs.writeFileSync('config.env', `SESSION=null
 PREFIX=.
 REACT=💛
@@ -192,6 +229,7 @@ DATABASE_URL=null
 
 const installDeps = async () => {
   const termux = isTermux();
+  
   if (!fs.existsSync('package.json')) {
     log.e('package.json missing');
     return false;
@@ -199,6 +237,7 @@ const installDeps = async () => {
 
   log.i('Checking dependencies...');
   const check = await run('npm list --depth=0 --json');
+  
   if (check.ok) {
     try {
       const data = JSON.parse(check.out);
@@ -211,6 +250,7 @@ const installDeps = async () => {
 
   const pkgPath = path.join(process.cwd(), 'package.json');
   let pkg;
+  
   try {
     pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
   } catch (e) {
@@ -268,20 +308,23 @@ const installDeps = async () => {
 const start = async () => {
   const havePm2 = (await run('pm2 -v')).ok;
   const launcher = havePm2 ? 'pm2' : 'npx';
-  const args = havePm2 ? ['start', '.', '--attach', '--name', 'vinsmoke', '--silent'] : ['pm2', 'start', '.', '--attach', '--name', 'vinsmoke', '--silent'];
+  const args = havePm2 
+    ? ['start', '.', '--attach', '--name', 'vinsmoke', '--silent'] 
+    : ['pm2', 'start', '.', '--attach', '--name', 'vinsmoke', '--silent'];
   
   log.i(`Starting via ${launcher}...`);
   const ok = await stream(launcher, args);
   
-  if (!ok) {
-    log.w('PM2 failed, trying node fallback');
-    if (fs.existsSync('index.js')) {
-      await stream('node', ['index.js']);
-      return true;
-    }
+  if (ok) return true;
+  
+  log.w('PM2 failed, trying node fallback');
+  
+  if (!fs.existsSync('index.js')) {
     log.e('No index.js found');
     return false;
   }
+  
+  await stream('node', ['index.js']);
   return true;
 };
 
@@ -289,6 +332,7 @@ const main = async () => {
   log.i('vinsmoke installer starting');
 
   if (!await ensureNode()) process.exit(1);
+  
   await ensureFfmpeg();
   await ensureGit();
 
@@ -302,6 +346,7 @@ const main = async () => {
   if (!deps) process.exit(1);
 
   log.s('All checks passed');
+  
   const started = await start();
   if (!started) {
     log.e('Start failed');
