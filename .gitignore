@@ -1,9 +1,13 @@
+lib/db/game/player.db
+lib/db/game/card.db
+plugins/cardgame.js
 package-lock.json
 plugins/test.js
 node_modules/
+lib/card.js
 config.env
+*.test.js
 session/
+test.js
 backup/
 test/
-test.js
-*.test.js
