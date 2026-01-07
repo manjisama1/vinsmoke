@@ -1,11 +1,13 @@
-lib/db/game/player.db
-lib/db/game/card.db
+
 plugins/cardgame.js
+plugins/survival.js
+plugins/bank.js
 package-lock.json
 plugins/test.js
 node_modules/
-lib/card.js
+lib/game.js
 config.env
+lib/game/
 *.test.js
 session/
 test.js

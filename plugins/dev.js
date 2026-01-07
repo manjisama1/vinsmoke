@@ -26,10 +26,8 @@ Command({
 
     let tracked = 0;
     await message.send(lang.plugins.track.started.format(count));
-
     const taskId = Tracker.register({ chat }, async (msg) => {
         let log;
-
         if (isBasic) {
             log = JSON.stringify(msg.raw, (key, value) => {
                 if (value instanceof Uint8Array) return Array.from(value);
@@ -51,7 +49,6 @@ Command({
         console.log(`[TRACK ${logMode} ${++tracked}/${count}]`, log);
 
         await message.send(`${lang.plugins.track.log.format(tracked, count)} (${logMode})\n\`\`\`json\n${log}\n\`\`\``, {}, target);
-
         if (tracked >= count) {
             Tracker.unregister(taskId);
             await message.send(lang.plugins.track.completed);

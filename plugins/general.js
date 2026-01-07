@@ -16,17 +16,19 @@ Command({
 
 
 Command({
-    pattern: 'menu',
-    desc: lang.plugins.menu.desc,
+    pattern: 'menu ?(.*)',
+    desc: 'Display command menu',
     type: 'general',
 }, async (message, match, manji) => {
-    const menuText = manji.menu(
+    const query = match?.trim();
+    const text = manji.menu(
         message.client.pluginManager,
-        manji.config,
-        message
-    );
-
-    await message.send(menuText);
+        manji.config, message, query);
+    return !text 
+        ? await message.reply(
+            `No categories matching "${query}"`
+        ) 
+        : await message.send(text);
 });
 
 
@@ -36,40 +38,39 @@ Command({
     type: 'general',
     sudo: true
 }, async (message, match, manji) => {
-    const uptime = process.uptime();
-    const uptimeStr = `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`;
-    const mode = manji.config.BOT_MODE || 'private';
-    const prefix = manji.config.PREFIX || '.';
-    const sudoUsers = manji.envList('SUDO').length;
+    const up = process.uptime();
+    const uptime = `${Math.floor(up / 3600)}h ${Math.floor((up % 3600) / 60)}m ${Math.floor(up % 60)}s`;
+    
+    const osMap = { win32: 'Windows', darwin: 'macOS', linux: 'Linux', android: 'Android' };
+    const platform = `${osMap[process.platform] || process.platform} (${process.arch})`;
+    
+    const mem = process.memoryUsage();
+    const [rss, used, total, ext] = [mem.rss, mem.heapUsed, mem.heapTotal, mem.external].map(b => (b / 1e6).toFixed(2));
 
-    const memUsage = process.memoryUsage();
-    const rss = (memUsage.rss / 1024 / 1024).toFixed(2);
-    const heapUsed = (memUsage.heapUsed / 1024 / 1024).toFixed(2);
-    const heapTotal = (memUsage.heapTotal / 1024 / 1024).toFixed(2);
-    const external = (memUsage.external / 1024 / 1024).toFixed(2);
+    const statusText = [
+        '╭───────────────',
+        '│     *𝐒𝐘𝐒𝐓𝐄𝐌 𝐒𝐓𝐀𝐓𝐔𝐒*',
+        '╰───────────────\n',
+        '┌─⊷ *BOT:*',
+        `│ • *Uptime:* ${uptime}`,
+        `│ • *Mode:* ${manji.config.BOT_MODE || 'private'}`,
+        `│ • *Prefix:* ${manji.config.PREFIX || '.'}`,
+        `│ • *Sudo:* ${manji.envList('SUDO').length} Users`,
+        '└───────────────\n',
+        '┌─⊷ *RESOURCES*',
+        `│ • *RSS:* ${rss} MB`,
+        `│ • *Heap:* ${used}/${total} MB`,
+        `│ • *External:* ${ext} MB`,
+        '└───────────────\n',
+        '┌─⊷ *ENGINE*',
+        `│ • *OS:* ${platform}`,
+        `│ • *Node:* ${process.version}`,
+        `│ • *PID:* ${process.pid}`,
+        `│ • *Status:* Running`,
+        '└───────────────'
+    ].join('\n');
 
-    const platformNames = {
-        win32: 'Windows',
-        darwin: 'macOS',
-        linux: 'Linux',
-        android: 'Android',
-        freebsd: 'FreeBSD',
-        openbsd: 'OpenBSD',
-        sunos: 'SunOS',
-        aix: 'AIX'
-    };
-    const platform = platformNames[process.platform] || process.platform;
-    const nodeVersion = process.version;
-    const pid = process.pid;
-    const connection = 'Connected';
-
-    const statusText = lang.plugins.status.template.format(
-        uptimeStr, mode, prefix, sudoUsers,
-        rss, heapUsed, heapTotal, external,
-        platform, nodeVersion, pid, connection
-    );
-
-    await message.send(statusText);
+    return await message.send(statusText);
 });
 
 
