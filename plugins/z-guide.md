@@ -56,15 +56,32 @@ message.command       // Parsed command name
 ### Media Properties
 ```javascript
 message.hasMedia      // true if message has media
-message.type          // 'text', 'image', 'video', 'audio', 'sticker', 'document'
+message.type          // 'text', 'image', 'video', 'audio', 'sticker', 'document', 'poll', etc.
 message.image         // true if image
 message.video         // true if video
 message.audio         // true if audio
 message.sticker       // sticker object or null
 message.document      // document object or null
+message.poll          // true if poll message
+message.event         // true if event message
+message.reaction      // true if reaction message
+message.contact       // true if contact message
+message.location      // true if location message
+message.interactive   // true if interactive message
+message.liveLocation  // true if live location
+message.order         // true if business order
+message.payment       // true if payment message
+message.invoice       // true if invoice message
+message.product       // true if product message
+message.groupInvite   // true if group invite
+message.voice         // true if voice note
+message.gif           // true if GIF video
+message.viewOnce      // true if view once media
+message.ephemeral     // true if ephemeral message
 message.mimetype      // Media MIME type
 message.filename      // File name
 message.filesize      // File size in bytes
+message.caption       // Media caption
 ```
 
 ### Quoted Message
@@ -72,9 +89,14 @@ message.filesize      // File size in bytes
 message.quoted        // Quoted message object
 message.quoted.text   // Quoted message text
 message.quoted.type   // Quoted message type
-message.quoted.sender // Quoted message sender
-message.quoted.image  // true if quoted message is image
-// ... other media properties available on quoted
+message.quoted.sender // Quoted message sender (JID format)
+message.quoted.jid    // Quoted message sender JID
+message.quoted.lid    // Quoted message sender LID
+message.quoted.fromMe // true if quoted message from bot
+message.quoted.chat   // Quoted message chat
+message.quoted.id     // Quoted message ID
+message.quoted.key    // Advanced WhatsApp key structure
+// All media properties available on quoted messages
 ```
 
 ## Sending Messages
@@ -127,6 +149,31 @@ await message.send({
 
 ### Advanced Message Options
 ```javascript
+// Poll message
+await message.send({
+    poll: 'Choose option',
+    values: ['Option 1', 'Option 2'],
+    selectableCount: 1
+});
+
+// Contact message
+await message.send({
+    contacts: {
+        name: 'Contact Name',
+        vcard: 'BEGIN:VCARD\nVERSION:3.0\nFN:Name\nTEL:+1234567890\nEND:VCARD'
+    }
+});
+
+// Location message
+await message.send({
+    location: {
+        lat: 40.7128,
+        lng: -74.0060,
+        name: 'New York',
+        address: 'New York, NY, USA'
+    }
+});
+
 // With mentions
 await message.send('Hello @user', { 
     mentions: ['user@s.whatsapp.net'] 
@@ -178,7 +225,7 @@ await manji.demote(message.chat, 'user@s.whatsapp.net');
 
 ## Event Listeners
 
-### Listen to All Messages
+### Listen to All Messages (Special & Powerful)
 ```javascript
 Listen({
     on: 'text',           // Message type filter
@@ -188,6 +235,13 @@ Listen({
     // Handle message
 });
 ```
+
+**⚠️ WARNING: Use Listen Carefully**
+- Listen bypasses private mode and sudo restrictions
+- **DO NOT** create command-like functionality with Listen
+- Everyone can trigger Listen handlers
+- Use Listen for: auto-tasks, variable updates, logging, monitoring
+- Use Command for: user-triggered actions with proper permissions
 
 ### Tracker System
 ```javascript
@@ -348,36 +402,76 @@ Command({
 });
 ```
 
-### Background Process
+### Poll Command Example
 ```javascript
-import { Command, Tracker } from '../lib/index.js';
-
-let autoReply = { active: false, trackerId: null };
+import { Command } from '../lib/index.js';
 
 Command({
-    pattern: 'autoreply ?(on|off)',
-    desc: 'Toggle auto reply',
+    pattern: 'poll ?(.*)',
+    desc: 'Create a poll',
     type: 'utility'
 }, async (message, match) => {
-    if (match === 'on') {
-        autoReply.active = true;
-        autoReply.trackerId = Tracker.register(
-            (msg) => msg.text?.includes('hello') && !msg.fromMe,
-            async (msg) => {
-                if (autoReply.active) {
-                    await msg.reply('Hello! How can I help?');
-                }
-            }
-        );
-        await message.send('Auto reply enabled');
-    } else if (match === 'off') {
-        autoReply.active = false;
-        if (autoReply.trackerId) {
-            Tracker.unregister(autoReply.trackerId);
-        }
-        await message.send('Auto reply disabled');
-    }
+    if (!match) return await message.send('Usage: poll question|option1|option2');
+    
+    const parts = match.split('|');
+    if (parts.length < 3) return await message.send('Need question and 2+ options');
+    
+    const [question, ...options] = parts;
+    await message.send({
+        poll: question.trim(),
+        values: options.map(opt => opt.trim()),
+        selectableCount: 1
+    });
 });
+```
+
+### Enhanced Quoted Message Handling
+```javascript
+import { Command } from '../lib/index.js';
+
+Command({
+    pattern: 'info',
+    desc: 'Get message info',
+    type: 'utility'
+}, async (message) => {
+    const target = message.quoted || message;
+    
+    await message.send([
+        `Type: ${target.type}`,
+        `From: ${target.sender}`,
+        `Chat: ${target.chat}`,
+        `ID: ${target.id}`,
+        target.quoted ? `LID: ${target.lid}` : ''
+    ].filter(Boolean).join('\n'));
+});
+```
+
+## Message Type Detection
+
+```javascript
+// Media types
+if (message.image) { /* handle image */ }
+if (message.video) { /* handle video */ }
+if (message.audio) { /* handle audio */ }
+if (message.sticker) { /* handle sticker */ }
+if (message.document) { /* handle document */ }
+if (message.poll) { /* handle poll */ }
+if (message.contact) { /* handle contact */ }
+if (message.location) { /* handle location */ }
+if (message.voice) { /* handle voice note */ }
+if (message.gif) { /* handle GIF */ }
+
+// Business types
+if (message.order) { /* handle business order */ }
+if (message.payment) { /* handle payment */ }
+if (message.invoice) { /* handle invoice */ }
+if (message.product) { /* handle product */ }
+
+// Other types
+if (message.reaction) { /* handle reaction */ }
+if (message.event) { /* handle event */ }
+if (message.groupInvite) { /* handle group invite */ }
+if (message.viewOnce) { /* handle view once media */ }
 ```
 
 ## Best Practices
@@ -389,6 +483,7 @@ Command({
 5. **Clean up resources** (trackers, intervals) when done
 6. **Test thoroughly** before sharing
 7. **Use appropriate reactions** - custom emojis for specific commands
+8. **⚠️ Listen vs Command**: Use Listen for background tasks only, not user commands
 
 ## React System Options
 

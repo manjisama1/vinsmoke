@@ -1,6 +1,4 @@
-/*
 import { Command, manjitube, lang } from '../lib/index.js';
-
 
 Command({
     pattern: 'yta ?(.*)',
@@ -47,4 +45,3 @@ Command({
         return message.send(lang.plugins.ytv.fail);
     }
 });
-*/

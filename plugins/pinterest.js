@@ -126,9 +126,9 @@ Command({
                 }
 
                 if (links.length) {
-                    await message.send(lang.plugins.pinterest.add_fetching.format(source, query, count));
+                    await message.send(lang.plugins.pinterest.add_fetching.format(query));
                     queueData.links.push(...links);
-                    await message.send(lang.plugins.pinterest.add_done.format(query, links.length));
+                    await message.send(lang.plugins.pinterest.add_done.format(links.length));
                 } else {
                     await message.send(lang.plugins.pinterest.add_failed.format(query));
                 }
@@ -288,7 +288,7 @@ Command({
     const processId = message.chat;
     activeProcesses.set(processId, { stopped: false });
 
-    await message.send(lang.plugins.pinterest.searching.format(results.length, source, finalCount, mediaType, query));
+    await message.send(lang.plugins.pinterest.searching.format(finalCount, mediaType));
 
     const { ratio, placement, type: shape } = ensureConfig();
 

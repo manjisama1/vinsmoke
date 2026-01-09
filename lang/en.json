@@ -81,7 +81,7 @@
     "promote": {
       "desc": "Promote a user to admin",
       "noUser": "Mention or reply to a user to promote",
-      "notAllowed": "You must be an admin to promote users",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "I need to be admin to promote someone",
       "alreadyAdmin": "{0} is already an admin",
       "notMember": "{0} is not in the group",
@@ -91,7 +91,7 @@
     "demote": {
       "desc": "Demote an admin to member",
       "noUser": "Mention or reply to a user to demote",
-      "notAllowed": "You must be an admin to demote users",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "I need to be admin to demote someone",
       "notAdmin": "{0} is not an admin",
       "cantDemoteSuper": "{0} is a superadmin, I can't demote them",
@@ -102,7 +102,7 @@
     "kick": {
       "desc": "Remove a user from the group",
       "noUser": "Mention or reply to a user to kick",
-      "notAllowed": "You must be an admin to kick users",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "I need to be admin to kick someone",
       "notMember": "{0} is not in the group",
       "cantKickSuper": "{0} is a superadmin, I can't kick them",
@@ -114,7 +114,7 @@
     "add": {
       "desc": "Add a user to the group",
       "noUser": "Mention or reply to a user to add",
-      "notAllowed": "You must be an admin to add users",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "I need to be admin to add someone",
       "alreadyMember": "{0} is already in the group",
       "success": "Added {0}",
@@ -122,7 +122,7 @@
     },
     "open": {
       "desc": "Open the group for everyone to send messages",
-      "notAllowed": "You must be an admin to open the group",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "I need to be admin to open the group",
       "opened": "Group opened",
       "openedFor": "Group opened for {0}",
@@ -131,7 +131,7 @@
     },
     "close": {
       "desc": "Close the group so only admins can send messages",
-      "notAllowed": "You must be an admin to close the group",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "I need to be admin to close the group",
       "closed": "Group closed",
       "closedFor": "Group closed for {0}",
@@ -141,7 +141,7 @@
     "disappear": {
       "desc": "Enable or disable disappearing messages",
       "usage": "*Usage:*\n> disappear on <days> / disappear off",
-      "notAllowed": "You must be an admin to change disappearing messages",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "I need to be admin to change disappearing messages",
       "enabled": "Disappearing messages enabled for {0}",
       "disabled": "Disappearing messages disabled",
@@ -152,32 +152,32 @@
     "gsetting": {
       "desc": "Update who can change group settings",
       "usage": "*Usage:*\n> gsetting admin / gsetting all",
-      "notAllowed": "You must be an admin to change group settings",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "I need to be admin to change group settings",
       "updated": "Group settings updated: {0}",
       "failed": "Failed to update group settings"
     },
     "invite": {
       "desc": "Get group invite link",
-      "notAllowed": "You must be an admin to get invite link",
+      "notAllowed": "You don't have permission",
       "success": "https://chat.whatsapp.com/{0}",
       "failed": "Failed to get invite link",
       "notAdmin": "Bot not admin"
     },
     "revoke": {
       "desc": "Revoke group invite link",
-      "notAllowed": "You must be an admin to revoke invite link",
+      "notAllowed": "You don't have permission",
       "success": "Invite link revoked",
       "notAdmin": "Bot not admin"
     },
     "delete": {
       "desc": "Delete a message",
       "noQuoted": "Reply to a message to delete",
-      "notAllowed": "You can only delete your own messages or be an admin"
+      "notAllowed": "You don't have permission"
     },
     "clear": {
       "desc": "Clear all messages in chat",
-      "notAllowed": "You must be an admin to clear chat",
+      "notAllowed": "You don't have permission",
       "success": "Cleared",
       "failed": "Failed to clear"
     },
@@ -209,7 +209,7 @@
     },
     "accept": {
       "desc": "Accept join requests - use numbers or leave empty for all",
-      "notAllowed": "You must be an admin to accept join requests",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "I need to be admin to accept join requests",
       "noPending": "No pending join requests",
       "noMatch": "No matching pending requests found",
@@ -219,7 +219,7 @@
     },
     "reject": {
       "desc": "Reject join requests - use numbers or leave empty for all",
-      "notAllowed": "You must be an admin to reject join requests",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "I need to be admin to reject join requests",
       "noPending": "No pending join requests",
       "noMatch": "No matching pending requests found",
@@ -229,7 +229,7 @@
     },
     "requests": {
       "desc": "Show pending join requests",
-      "notAllowed": "You must be an admin to view join requests",
+      "notAllowed": "You don't have permission",
       "failed": "Failed to get requests",
       "empty": "No pending join requests",
       "header": "*Pending Join Requests ({0}):*\n\n",
@@ -272,7 +272,7 @@
     "antilink": {
       "desc": "Manage link protection",
       "usage": "*Usage:* {0}antilink on/off | warn/delete/kick | allow/deny <links> | clear | info",
-      "notAllowed": "Admin required",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "Bot needs admin",
       "enabled": "Antilink enabled",
       "disabled": "Antilink disabled",
@@ -288,7 +288,7 @@
     "antiword": {
       "desc": "Manage word filtering",
       "usage": "*Usage:* {0}antiword on/off | warn/delete/kick | allow/deny <words> | clear | info",
-      "notAllowed": "Admin required",
+      "notAllowed": "You don't have permission",
       "botNotAdmin": "Bot needs admin",
       "enabled": "Antiword enabled",
       "disabled": "Antiword disabled",
@@ -307,7 +307,7 @@
       "listDesc": "Show list of banned users",
       "whobanDesc": "Show detailed ban information for users",
       "noUser": "Reply to a message or mention users to ban/unban",
-      "notAllowed": "You must be an admin to ban/unban users",
+      "notAllowed": "You don't have permission to ban/unban users",
       "botNotAdmin": "I need to be admin to ban/unban users",
       "cantBanBot": "Cannot ban the bot {0}",
       "bannedPerm": "Banned {0}",
@@ -389,21 +389,24 @@
       "downloadFail": "Failed to download media",
       "groupOnly": "This command only works in groups",
       "notMember": "Bot is not a member of this group",
-      "notAdmin": "Bot is not an admin in this group"
+      "notAdmin": "Bot is not an admin in this group",
+      "notAllowed": "Not allowed"
     },
     "gsubject": {
       "desc": "Change group subject",
       "updated": "Group subject updated",
       "groupOnly": "This command only works in groups",
       "notAdmin": "Bot is not an admin in this group",
-      "noText": "Provide a new subject"
+      "noText": "Provide a new subject",
+      "notAllowed": "Not allowed"
     },
     "gdesc": {
       "desc": "Change group description",
       "updated": "Group description updated",
       "groupOnly": "This command only works in groups",
       "notAdmin": "Bot is not an admin in this group",
-      "noText": "Provide a new description"
+      "noText": "Provide a new description",
+      "notAllowed": "Not allowed"
     },
     "username": {
       "desc": "Update bot profile name",
@@ -423,22 +426,29 @@
     "tagall": {
       "desc": "Mention all participants",
       "format": "> {0}. @{1}",
-      "header": "*EVERYONE:*\n"
+      "header": "*EVERYONE:*\n",
+      "groupOnly": "Group only",
+      "notAllowed": "Not allowed"
     },
     "admins": {
       "desc": "Mention all admins/superadmins",
-      "empty": "No admins found!",
+      "empty": "No admins found",
       "format": "> @{1}",
-      "header": "*ADMINS:*\n"
+      "header": "*ADMINS:*\n",
+      "groupOnly": "Group only"
     },
     "nonadmins": {
       "desc": "Mention all non-admins",
-      "empty": "No non-admins found!",
+      "empty": "No non-admins found",
       "format": "> @{1}",
-      "header": "*MEMBERS:*\n"
+      "header": "*MEMBERS:*\n",
+      "groupOnly": "Group only",
+      "notAllowed": "Not allowed"
     },
     "tag": {
-      "desc": "Hidden mention in any message"
+      "desc": "Hidden mention in any message",
+      "groupOnly": "Group only",
+      "notAllowed": "Not allowed"
     },
     "track": {
       "desc": "Track incoming raw messages with basic or advanced mode",
@@ -457,7 +467,7 @@
       "usage": "*Usage:*\n> {0}pt <mode> <query>\n> Modes: i|s|add|go|stop",
       "invalid_mode": "Invalid mode",
       "no_query": "Provide query",
-      "searching": "Found {0} via {1}. Sending {2} {3}: {4}",
+      "searching": "Sending {0} {1}",
       "no_results": "No results",
       "failed": "Fetch failed",
       "stopped": "Stopped. Sent {0}/{1}",
@@ -465,13 +475,13 @@
       "no_api": "PIN_API not configured",
       "backup_no_link": "Backup can't handle links. Use API",
       "add_usage": "*Usage:*\n> {0}pt add [i/s] [count] <query1>,<query2>",
-      "add_fetching": "({0}) Searching: {1} ({2})",
-      "add_done": "{0}: {1} links",
+      "add_fetching": "Searching: {0}",
+      "add_done": "Added {0} links",
       "add_failed": "{0}: No results",
       "add_error": "{0}: {1}",
       "queue_empty": "Queue empty",
-      "queue_start": "Processing {0} {1}",
-      "queue_done": "Done. Sent {0} stickers"
+      "queue_start": "Sending {0} {1}",
+      "queue_done": "Sent {0}"
     },
     "ssize": {
       "desc": "View or update sticker crop/type settings",
@@ -653,6 +663,11 @@
         "success_caption": "Title: {0}\nAuthor: {1}\nDuration: {2}\nViews: {3}\nQuery: {4}",
         "download_failed": "Download failed: {0}\nError: {1}",
         "search_failed": "Search failed: {0}"
+    },
+    "translate": {
+      "desc": "Instant translation",
+      "no_text": "Provide text or reply to a message",
+      "no_target": "Provide text to translate"
     }
   }
 }

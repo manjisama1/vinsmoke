@@ -266,41 +266,30 @@ Command({
     sudo: true
 }, async (message, match) => {
     try {
+        const current = await getCurrentHash();
+        
         if (!match) {
-            const current = await getCurrentHash();
-            const available = await hasUpdates();
-
-            if (available) {
-                const latest = await getLatestHash();
-                await message.send(lang.plugins.update.available.format(current, latest));
-            } else {
-                await message.send(lang.plugins.update.upToDate.format(current));
-            }
-            return;
+            const hasUpdate = await hasUpdates();
+            if (!hasUpdate) return await message.send(lang.plugins.update.upToDate.format(current));
+            
+            const latest = await getLatestHash();
+            return await message.send(lang.plugins.update.available.format(current, latest));
         }
 
         if (match.startsWith('list')) {
-            const parts = match.split(' ');
-            const count = parts[1] ? parseInt(parts[1]) : 15;
+            const count = parseInt(match.split(' ')[1]) || 15;
             const commits = await getCommits(count);
-            const commitList = commits.map(c => `> ${c.date} - \`${c.hash}\``).join('\n');
-            await message.send(lang.plugins.update.commits.format(commitList));
-            return;
+            const list = commits.map(c => `> ${c.date} - \`${c.hash}\` : ${c.message}`).join('\n');
+            return await message.send(lang.plugins.update.commits.format(list));
         }
 
-        if (match === 'now') {
-            await message.send(lang.plugins.update.updating);
-            await updateToCommit();
-            await message.send(lang.plugins.update.updated);
-            process.exit(0);
-            return;
-        }
-
-        await message.send(lang.plugins.update.updatingTo.format(match));
-        await updateToCommit(match);
+        const target = match === 'now' ? 'origin/main' : match;
+        await message.send(lang.plugins.update.updatingTo.format(target));
+        
+        await updateToCommit(target);
+        
         await message.send(lang.plugins.update.updated);
         process.exit(0);
-
     } catch (error) {
         await message.send(lang.plugins.update.failed.format(error.message));
     }

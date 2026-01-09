@@ -38,8 +38,9 @@ const formatMultiple = results => {
 
 Command({
     pattern: 'plugin ?(.*)',
+    aliases: ['plug', 'install'],
     description: lang.plugins.plugin.desc,
-    category: 'system',
+    category: 'owner',
     sudo: true
 }, async (message, match) => {
     const input = match?.trim() || '';
@@ -68,8 +69,9 @@ Command({
 
 Command({
     pattern: 'plugout ?(.*)',
+    aliases: ['unplug', 'uninstall'],
     description: lang.plugins.plugout.desc,
-    category: 'system',
+    category: 'owner',
     sudo: true
 }, async (message, match) => {
     const input = match?.trim() || '';

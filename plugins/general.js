@@ -14,7 +14,6 @@ Command({
     await message.send(response);
 });
 
-
 Command({
     pattern: 'menu ?(.*)',
     desc: 'Display command menu',
@@ -31,48 +30,17 @@ Command({
         : await message.send(text);
 });
 
-
 Command({
-    pattern: 'status',
+    pattern: 'system',
     desc: lang.plugins.status.desc,
     type: 'general',
     sudo: true
-}, async (message, match, manji) => {
-    const up = process.uptime();
-    const uptime = `${Math.floor(up / 3600)}h ${Math.floor((up % 3600) / 60)}m ${Math.floor(up % 60)}s`;
-    
-    const osMap = { win32: 'Windows', darwin: 'macOS', linux: 'Linux', android: 'Android' };
-    const platform = `${osMap[process.platform] || process.platform} (${process.arch})`;
-    
-    const mem = process.memoryUsage();
-    const [rss, used, total, ext] = [mem.rss, mem.heapUsed, mem.heapTotal, mem.external].map(b => (b / 1e6).toFixed(2));
-
-    const statusText = [
-        '╭───────────────',
-        '│     *𝐒𝐘𝐒𝐓𝐄𝐌 𝐒𝐓𝐀𝐓𝐔𝐒*',
-        '╰───────────────\n',
-        '┌─⊷ *BOT:*',
-        `│ • *Uptime:* ${uptime}`,
-        `│ • *Mode:* ${manji.config.BOT_MODE || 'private'}`,
-        `│ • *Prefix:* ${manji.config.PREFIX || '.'}`,
-        `│ • *Sudo:* ${manji.envList('SUDO').length} Users`,
-        '└───────────────\n',
-        '┌─⊷ *RESOURCES*',
-        `│ • *RSS:* ${rss} MB`,
-        `│ • *Heap:* ${used}/${total} MB`,
-        `│ • *External:* ${ext} MB`,
-        '└───────────────\n',
-        '┌─⊷ *ENGINE*',
-        `│ • *OS:* ${platform}`,
-        `│ • *Node:* ${process.version}`,
-        `│ • *PID:* ${process.pid}`,
-        `│ • *Status:* Running`,
-        '└───────────────'
-    ].join('\n');
-
-    return await message.send(statusText);
+}, async (message, _, manji) => {
+    const text = manji.runtime(
+        message.client.pluginManager,
+        manji.config, message);
+    await message.send(text);
 });
-
 
 Command({
     pattern: 'mode ?(.*)',
@@ -80,16 +48,9 @@ Command({
     type: 'general',
     sudo: true,
 }, async (message, match, manji) => {
-    if (!match) {
-        const currentMode = manji.config.BOT_MODE || 'private';
-        return await message.send(lang.plugins.mode.current.format(currentMode));
-    }
-
+    if (!match) return await message.send(lang.plugins.mode.current.format(config.BOT_MODE || 'private'));
     const mode = match.toLowerCase();
-    if (mode !== 'public' && mode !== 'private') {
-        return await message.send(lang.plugins.mode.example.format(config.PREFIX));
-    }
-
-    manji.envSet('BOT_MODE', mode);
+    if (mode !== 'public' && mode !== 'private') return await message.send(lang.plugins.mode.example.format(config.PREFIX));
+    await manji.envSet('BOT_MODE', mode);
     await message.send(lang.plugins.mode.status.format(mode));
 });
