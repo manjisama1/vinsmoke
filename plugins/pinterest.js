@@ -10,369 +10,157 @@ const queueFile = path.join(mediaDir, 'pin.json');
 const settingsPath = path.join(__dirname, '..', 'lib', 'db', 'sticker.json');
 const activeProcesses = new Map();
 
-const safeDelete = file => fs.existsSync(file) && fs.unlinkSync(file);
+const safeDelete = f => fs.existsSync(f) && fs.unlinkSync(f);
 
-const ensureConfig = () => {
+const getSet = () => {
     if (!fs.existsSync(settingsPath)) {
         fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
-        fs.writeFileSync(settingsPath, JSON.stringify({ settings: { ratio: '1:1', placement: 1, type: '0' } }, null, 2));
+        fs.writeFileSync(settingsPath, JSON.stringify({ settings: { ratio: '1:1', placement: 1, type: '0' } }));
     }
     return JSON.parse(fs.readFileSync(settingsPath, 'utf8')).settings;
 };
 
-const ensureMediaDir = () => {
+const manageDir = () => {
     if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir, { recursive: true });
     if (!fs.existsSync(queueFile)) fs.writeFileSync(queueFile, '');
 };
 
-const readQueue = () => {
-    ensureMediaDir();
+const getQueue = () => {
+    manageDir();
     try {
-        const data = fs.readFileSync(queueFile, 'utf8');
-        if (!data.trim()) return { type: 's', links: [] };
-        const parsed = JSON.parse(data);
-        return { 
-            type: parsed.type || 's', 
-            links: Array.isArray(parsed.links) ? parsed.links : (Array.isArray(parsed) ? parsed : [])
-        };
-    } catch {
-        return { type: 's', links: [] };
-    }
+        const d = fs.readFileSync(queueFile, 'utf8');
+        const p = d.trim() ? JSON.parse(d) : { type: 's', links: [] };
+        return { type: p.type || 's', links: Array.isArray(p.links) ? p.links : (Array.isArray(p) ? p : []) };
+    } catch { return { type: 's', links: [] }; }
 };
 
-const writeQueue = data => {
-    ensureMediaDir();
-    fs.writeFileSync(queueFile, JSON.stringify(data, null, 2));
+const saveQueue = d => {
+    manageDir();
+    fs.writeFileSync(queueFile, JSON.stringify(d, null, 2));
 };
 
-const removeFromQueue = count => {
-    const data = readQueue();
-    data.links = data.links.slice(count);
-    writeQueue(data);
+const popQueue = n => {
+    const d = getQueue();
+    d.links = d.links.slice(n);
+    saveQueue(d);
 };
+
+const processMedia = async (url, type, ratio, shape, i) => {
+    const temps = [];
+    try {
+        const buf = (await axios.get(url, { responseType: 'arraybuffer' })).data;
+        const f = path.join(tempDir, `pin_${Date.now()}_${i}.jpg`);
+        fs.writeFileSync(f, buf);
+        temps.push(f);
+        if (type !== 's') return { buffer: buf, temps };
+
+        let cur = ratio !== '0' ? await cropImage(f, { ratio }) : f;
+        if (cur !== f) temps.push(cur);
+
+        if (shape === 'circle') cur = await circleCrop(cur);
+        else if (shape === 'rounded') cur = await roundedCrop(cur, 80);
+        if (!temps.includes(cur)) temps.push(cur);
+
+        const stic = await sticker(cur);
+        return { sticker: stic, temps };
+    } catch (e) { return { error: e, temps }; }
+};
+
 
 
 Command({
     pattern: 'pinterest ?(.*)',
     aliases: ['pt'],
     desc: lang.plugins.pinterest.desc,
-    type: 'media',
+    type: 'media'
 }, async (message, match, manji) => {
-    if (!match?.trim()) return message.send(lang.plugins.pinterest.usage.format(manji.config.PREFIX));
+    const args = (match || '').trim().split(/\s+/);
+    const cmd = args[0]?.toLowerCase();
+    const pid = message.chat;
 
-    const parts = match.trim().split(/\s+/);
-    const command = parts[0]?.toLowerCase();
+    if (!match) return message.send(lang.plugins.pinterest.usage.format(config.PREFIX));
 
-    if (command === 'stop') {
-        const processId = message.chat;
-        if (activeProcesses.has(processId)) {
-            activeProcesses.get(processId).stopped = true;
-            return;
+    if (cmd === 'stop') 
+        return activeProcesses.has(pid) 
+            ? (activeProcesses.get(pid).stopped = true) 
+            : message.send(lang.plugins.pinterest.no_active);
+
+    if (cmd === 'add') {
+        const input = args.slice(1).join(' ');
+        if (!input) return message.send(lang.plugins.pinterest.add_usage.format(config.PREFIX));
+
+        const type = ['i', 's'].includes(args[1]) ? args[1] : 's';
+        const count = !isNaN(args[type === args[1] ? 2 : 1]) ? parseInt(args[type === args[1] ? 2 : 1]) : 50;
+        const queries = input.split(',').map(q => q.trim()).filter(Boolean);
+        const qData = getQueue();
+        qData.type = type;
+
+        let added = 0;
+        for (const q of queries) {
+            const res = await axios.post(config.PIN_API || 'http://localhost:3000/scrape', { input: q, desiredCount: count }).catch(() => null);
+            let links = res?.data?.data || (!q.startsWith('http') ? await pinterest(q) : []);
+            links = links.slice(0, count);
+            qData.links.push(...links);
+            added += links.length;
         }
-        return message.send(lang.plugins.pinterest.no_active);
+        saveQueue(qData);
+        return message.send(lang.plugins.pinterest.add_done.format(added));
     }
 
-    if (command === 'add') {
-        const input = parts.slice(1).join(' ');
-        if (!input) return message.send(lang.plugins.pinterest.add_usage.format(manji.config.PREFIX));
+    if (cmd === 'go') {
+        const qData = getQueue();
+        if (!qData.links.length) return message.send(lang.plugins.pinterest.queue_empty);
 
-        let type = 's';
-        let count = 50;
-        let queriesStr = input;
-
-        if (['i', 's'].includes(parts[1]?.toLowerCase())) {
-            type = parts[1].toLowerCase();
-            const secondPart = parts[2];
-            
-            if (secondPart && !isNaN(parseInt(secondPart))) {
-                count = parseInt(secondPart);
-                queriesStr = parts.slice(3).join(' ');
-            } else {
-                queriesStr = parts.slice(2).join(' ');
-            }
-        } else if (!isNaN(parseInt(parts[1]))) {
-            count = parseInt(parts[1]);
-            queriesStr = parts.slice(2).join(' ');
-        }
-
-        const queries = queriesStr.split(',').map(q => q.trim()).filter(Boolean);
-        if (!queries.length) return message.send(lang.plugins.pinterest.add_usage.format(manji.config.PREFIX));
-
-        const pinApi = manji.config.PIN_API || config.PIN_API || 'http://localhost:3000/scrape';
-        const current = readQueue();
-        const queueData = { type, links: Array.isArray(current.links) ? [...current.links] : [] };
-
-        for (const query of queries) {
-            try {
-                let links = [];
-                let source = '';
-
-                try {
-                    const res = await axios.post(pinApi, { input: query, desiredCount: count });
-                    links = res.data?.data || [];
-                    source = 'API';
-                } catch {}
-
-                if (!links.length) {
-                    if (query.startsWith('http')) {
-                        await message.send(lang.plugins.pinterest.backup_no_link);
-                        continue;
-                    }
-                    try {
-                        links = await pinterest(query);
-                        links = links.slice(0, count);
-                        source = 'Backup';
-                    } catch {}
-                }
-
-                if (links.length) {
-                    await message.send(lang.plugins.pinterest.add_fetching.format(query));
-                    queueData.links.push(...links);
-                    await message.send(lang.plugins.pinterest.add_done.format(links.length));
-                } else {
-                    await message.send(lang.plugins.pinterest.add_failed.format(query));
-                }
-            } catch (err) {
-                await message.send(lang.plugins.pinterest.add_error.format(query, err.message));
-            }
-        }
-
-        fs.writeFileSync(queueFile, JSON.stringify(queueData, null, 2));
-        return;
-    }
-
-    if (command === 'go') {
-        const queueData = readQueue();
-        if (!queueData.links.length) return message.send(lang.plugins.pinterest.queue_empty);
-
-        const processId = message.chat;
-        activeProcesses.set(processId, { stopped: false });
-
-        const type = queueData.type;
-        const mediaType = type === 'i' ? 'images' : 'stickers';
-        await message.send(lang.plugins.pinterest.queue_start.format(queueData.links.length, mediaType));
-
-        const { ratio, placement, type: shape } = ensureConfig();
+        activeProcesses.set(pid, { stopped: false });
+        const { ratio, type: shape } = getSet();
         let sent = 0;
-        let stopped = false;
 
         try {
-            for (let i = 0; i < queueData.links.length; i++) {
-                const process = activeProcesses.get(processId);
-                if (!process || process.stopped) {
-                    stopped = true;
-                    break;
-                }
-
-                const url = queueData.links[i];
-                const tempFiles = [];
-
-                try {
-                    const imgBuffer = Buffer.from((await axios.get(url, { responseType: 'arraybuffer' })).data);
-                    const tempFile = path.join(tempDir, `pin_${Date.now()}_${i}.jpg`);
-                    fs.writeFileSync(tempFile, imgBuffer);
-                    tempFiles.push(tempFile);
-
-                    if (type === 's') {
-                        let processedFile = tempFile;
-
-                        if (ratio !== '0') {
-                            processedFile = await cropImage(tempFile, { ratio });
-                            tempFiles.push(processedFile);
-                        }
-
-                        if (shape && shape !== '0') {
-                            let shapedFile;
-                            if (shape === 'circle') shapedFile = await circleCrop(processedFile);
-                            else if (shape === 'rounded') shapedFile = await roundedCrop(processedFile, 80);
-
-                            if (shapedFile) {
-                                tempFiles.push(shapedFile);
-                                processedFile = shapedFile;
-                            }
-                        }
-
-                        const currentProcess = activeProcesses.get(processId);
-                        if (!currentProcess || currentProcess.stopped) {
-                            stopped = true;
-                            break;
-                        }
-
-                        const stickerBuffer = await sticker(processedFile);
-                        
-                        const finalProcess = activeProcesses.get(processId);
-                        if (!finalProcess || finalProcess.stopped) {
-                            stopped = true;
-                            break;
-                        }
-
-                        if (stickerBuffer) {
-                            await message.send({ sticker: stickerBuffer });
-                            sent++;
-                            removeFromQueue(1);
-                        }
-                    } else {
-                        const currentProcess = activeProcesses.get(processId);
-                        if (!currentProcess || currentProcess.stopped) {
-                            stopped = true;
-                            break;
-                        }
-                        
-                        await message.send(imgBuffer);
-                        sent++;
-                        removeFromQueue(1);
-                    }
-                } catch (err) {
-                    console.error('Pinterest queue error:', err.message);
-                } finally {
-                    tempFiles.forEach(safeDelete);
-                }
+            for (const url of qData.links) {
+                if (activeProcesses.get(pid)?.stopped) break;
+                const { buffer, sticker: stic, temps } = await processMedia(url, qData.type, ratio, shape, sent);
+                if (stic) await message.send({ sticker: stic });
+                else if (buffer) await message.send(buffer);
+                if (stic || buffer) { sent++; popQueue(1); }
+                temps?.forEach(safeDelete);
             }
         } finally {
-            activeProcesses.delete(processId);
-            if (stopped) {
-                await message.send(lang.plugins.pinterest.stopped.format(sent, queueData.links.length));
-            } else {
-                await message.send(lang.plugins.pinterest.queue_done.format(sent));
-            }
+            const stop = activeProcesses.get(pid)?.stopped;
+            activeProcesses.delete(pid);
+            return stop 
+                ? message.send(lang.plugins.pinterest.stopped.format(sent, qData.links.length)) 
+                : message.send(lang.plugins.pinterest.queue_done.format(sent));
         }
-        return;
     }
 
-    const type = command;
-    if (!['i', 's'].includes(type)) return message.send(lang.plugins.pinterest.invalid_mode);
+    const type = ['i', 's'].includes(cmd) ? cmd : null;
+    if (!type) return message.send(lang.plugins.pinterest.invalid_mode);
 
-    let count, query;
-    const secondPart = parts[1];
-
-    if (secondPart && !isNaN(parseInt(secondPart))) {
-        count = parseInt(secondPart);
-        query = parts.slice(2).join(' ');
-    } else {
-        query = parts.slice(1).join(' ');
-        count = null;
-    }
-
+    const count = !isNaN(args[1]) ? parseInt(args[1]) : (type === 'i' ? 5 : 50);
+    const query = args.slice(!isNaN(args[1]) ? 2 : 1).join(' ');
     if (!query) return message.send(lang.plugins.pinterest.no_query);
 
-    const pinApi = manji.config.PIN_API || config.PIN_API || 'http://localhost:3000/scrape';
-    let results = [];
-    let source = '';
+    activeProcesses.set(pid, { stopped: false });
+    const res = await axios.post(config.PIN_API || 'http://localhost:3000/scrape', { input: query, desiredCount: count }).catch(() => null);
+    let results = (res?.data?.data || (!query.startsWith('http') ? await pinterest(query) : [])).slice(0, count);
+    if (!results.length) return message.send(lang.plugins.pinterest.no_results);
 
-    const apiCount = count || (type === 'i' ? 5 : 50);
-
-    try {
-        const res = await axios.post(pinApi, { input: query, desiredCount: apiCount });
-        results = res.data?.data || [];
-        source = 'API';
-    } catch {}
-
-    if (!results.length) {
-        if (query.startsWith('http')) {
-            return message.send(lang.plugins.pinterest.backup_no_link);
-        }
-        try {
-            results = await pinterest(query);
-            source = 'Backup';
-        } catch {
-            return message.send(lang.plugins.pinterest.failed);
-        }
-    }
-
-    if (!results?.length) return message.send(lang.plugins.pinterest.no_results);
-
-    count = count || (type === 'i' ? 5 : results.length);
-    const finalCount = Math.min(count, results.length);
-    const mediaType = type === 'i' ? 'images' : 'stickers';
-
-    const processId = message.chat;
-    activeProcesses.set(processId, { stopped: false });
-
-    await message.send(lang.plugins.pinterest.searching.format(finalCount, mediaType));
-
-    const { ratio, placement, type: shape } = ensureConfig();
-
+    const { ratio, type: shape } = getSet();
     let sent = 0;
-    let stopped = false;
 
     try {
-        for (let i = 0; i < finalCount; i++) {
-            const process = activeProcesses.get(processId);
-            if (!process || process.stopped) {
-                stopped = true;
-                break;
-            }
-
-            const url = results[i];
-            const tempFiles = [];
-
-            try {
-                const imgBuffer = Buffer.from((await axios.get(url, { responseType: 'arraybuffer' })).data);
-                const tempFile = path.join(tempDir, `pinterest_${Date.now()}_${i}.jpg`);
-                fs.writeFileSync(tempFile, imgBuffer);
-                tempFiles.push(tempFile);
-
-                if (type === 's') {
-                    let processedFile = tempFile;
-
-                    if (ratio !== '0') {
-                        processedFile = await cropImage(tempFile, { ratio });
-                        tempFiles.push(processedFile);
-                    }
-
-                    if (shape && shape !== '0') {
-                        let shapedFile;
-                        if (shape === 'circle') {
-                            shapedFile = await circleCrop(processedFile);
-                        } else if (shape === 'rounded') {
-                            shapedFile = await roundedCrop(processedFile, 80);
-                        }
-
-                        if (shapedFile) {
-                            tempFiles.push(shapedFile);
-                            processedFile = shapedFile;
-                        }
-                    }
-
-                    const currentProcess = activeProcesses.get(processId);
-                    if (!currentProcess || currentProcess.stopped) {
-                        stopped = true;
-                        break;
-                    }
-
-                    const stickerBuffer = await sticker(processedFile);
-                    
-                    const finalProcess = activeProcesses.get(processId);
-                    if (!finalProcess || finalProcess.stopped) {
-                        stopped = true;
-                        break;
-                    }
-
-                    if (stickerBuffer) {
-                        await message.send({ sticker: stickerBuffer });
-                        sent++;
-                    }
-                } else {
-                    const currentProcess = activeProcesses.get(processId);
-                    if (!currentProcess || currentProcess.stopped) {
-                        stopped = true;
-                        break;
-                    }
-                    
-                    await message.send(imgBuffer);
-                    sent++;
-                }
-            } catch (err) {
-                console.error('Pinterest error:', err.message);
-            } finally {
-                tempFiles.forEach(safeDelete);
-            }
+        for (const url of results) {
+            if (activeProcesses.get(pid)?.stopped) break;
+            const { buffer, sticker: stic, temps } = await processMedia(url, type, ratio, shape, sent);
+            if (stic) await message.send({ sticker: stic });
+            else if (buffer) await message.send(buffer);
+            if (stic || buffer) sent++;
+            temps?.forEach(safeDelete);
         }
     } finally {
-        activeProcesses.delete(processId);
-        if (stopped) {
-            await message.send(lang.plugins.pinterest.stopped.format(sent, finalCount));
-        }
+        const stop = activeProcesses.get(pid)?.stopped;
+        activeProcesses.delete(pid);
+        if (stop) await message.send(lang.plugins.pinterest.stopped.format(sent, results.length));
     }
 });
 
@@ -380,60 +168,49 @@ Command({
 Command({
     pattern: 'ssize ?(.*)',
     desc: lang.plugins.ssize.desc,
-    type: 'sticker',
+    type: 'sticker'
 }, async (message, match) => {
-    const settings = ensureConfig();
+    const settings = getSet();
     const keys = Object.keys(settings);
-
+    
     if (!match?.trim()) {
         const list = keys.map((k, i) => `${i + 1}. ${k[0].toUpperCase() + k.slice(1)}: ${settings[k]}`).join('\n');
         return message.send(lang.plugins.ssize.current.format(list));
     }
 
     const updates = match.split(',').map(s => s.trim()).filter(Boolean);
-    const success = [];
-    const failed = [];
+    const success = [], failed = [];
 
     for (const upd of updates) {
         const [num, val] = upd.split('=').map(x => x.trim());
-        const idx = parseInt(num) - 1;
-        const key = keys[idx];
+        const key = keys[parseInt(num) - 1];
 
         if (!val || !key) {
             failed.push(lang.plugins.ssize.invalid_index.format(upd));
             continue;
         }
 
-        let valid = true;
-        let reason = '';
+        const valid = 
+            key === 'ratio' ? (/^(\d+:\d+)$/.test(val) || val === '0') :
+            key === 'placement' ? ['0', '1', '2'].includes(val) :
+            key === 'type' ? ['0', 'circle', 'rounded'].includes(val.toLowerCase()) : false;
 
-        switch (key) {
-            case 'ratio':
-                valid = /^(\d+:\d+)$/.test(val) || val === '0';
-                if (!valid) reason = lang.plugins.ssize.invalid_ratio;
-                break;
-            case 'placement':
-                valid = ['0', '1', '2'].includes(val);
-                if (!valid) reason = lang.plugins.ssize.invalid_placement;
-                break;
-            case 'type':
-                valid = ['0', 'circle', 'rounded'].includes(val.toLowerCase());
-                if (!valid) reason = lang.plugins.ssize.invalid_type;
-                break;
-        }
-
-        if (valid) {
-            settings[key] = val;
-            success.push(`${key}: ${val}`);
-        } else {
+        if (!valid) {
+            const reason = key === 'ratio' ? lang.plugins.ssize.invalid_ratio : key === 'placement' ? lang.plugins.ssize.invalid_placement : lang.plugins.ssize.invalid_type;
             failed.push(`${key}: ${val} → ${reason}`);
+            continue;
         }
+
+        settings[key] = val;
+        success.push(`${key}: ${val}`);
     }
 
-    fs.writeFileSync(settingsPath, JSON.stringify({ settings }, null, 2));
+    fs.writeFileSync(settingsPath, JSON.stringify({ settings }));
+    
+    const msg = [
+        success.length ? lang.plugins.ssize.updated.format(success.join('\n')) : '',
+        failed.length ? lang.plugins.ssize.failed.format(failed.join('\n')) : ''
+    ].filter(Boolean).join('\n');
 
-    let msg = '';
-    if (success.length) msg += lang.plugins.ssize.updated.format(success.join('\n')) + '\n';
-    if (failed.length) msg += lang.plugins.ssize.failed.format(failed.join('\n'));
-    await message.send(msg.trim() || lang.plugins.ssize.no_updates);
+    return message.send(msg.trim() || lang.plugins.ssize.no_updates);
 });

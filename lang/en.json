@@ -462,7 +462,7 @@
     },
     "pinterest": {
       "desc": "Pinterest downloader with queue",
-      "usage": "*Usage:*\n> {0}pt <mode> <query>\n> Modes: i|s|add|go|stop",
+      "usage": "*Usage:*\n> {0}pt <mode> <amount> <query>\n> Modes: i|s|add|go|stop",
       "invalid_mode": "Invalid mode",
       "no_query": "Provide query",
       "searching": "Sending {0} {1}",

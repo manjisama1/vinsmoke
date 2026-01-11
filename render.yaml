@@ -9,41 +9,33 @@ services:
     autoDeploy: true
     healthCheckPath: /
     envVars:
-      - key: SESSION
-        value: null
+      - key: SESSION_ID
+        value: ""
       - key: PREFIX
-        value: .
+        value: ""
       - key: REACT
-        value: 💗
+        value: ""
       - key: STICKER_PACK
-        value: °
+        value: ""
       - key: BOT_MODE
-        value: public
+        value: ""
       - key: SUDO
-        value: null
+        value: ""
       - key: QR
-        value: true
+        value: ""
       - key: BOT_NUM
-        value: null
+        value: ""
       - key: WARN
-        value: 2
+        value: ""
       - key: TIMEZONE
-        value: Asia/Kolkata
+        value: ""
+      - key: ADMIN_VALUE
+        value: ""
       - key: BOT_LANG
-        value: en
+        value: ""
       - key: AUTO_READ
-        value: false
+        value: ""
       - key: AUTO_STATUS_READ
-        value: false
+        value: ""
       - key: ALWAYS_ONLINE
-        value: false
-      - key: DELETE
-        value: true
-      - key: DATABASE_URL
-        value: null
-      - key: PIN_API
-        value: null
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 3000
+        value: ""
