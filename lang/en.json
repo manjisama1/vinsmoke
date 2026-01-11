@@ -500,6 +500,10 @@
       "desc": "Save media to bot owner",
       "reply_required": "Reply to a media message"
     },
+    "forward": {
+      "desc": "Forwards messages.",
+      "reply_required": "Reply to a message"
+    },
     "toimg": {
       "desc": "Convert static sticker to image",
       "reply_required": "Reply to a non-animated sticker",

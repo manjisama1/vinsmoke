@@ -1,25 +1,32 @@
 import {
-  Command,
-  lang,
-  cleanup,
-  spotifyDl,
-  instaDl,
-  downLoad,
-  webpToImage,
-  webpToMp4,
-  cropVideo,
-  cropImage,
-  resizeMedia,
-  mediaRotate,
-  videoMeta,
-  videoToAudio,
-  editAudioMeta
+    wait,
+    Command,
+    lang,
+    cleanup,
+    spotifyDl,
+    instaDl,
+    downLoad,
+    webpToImage,
+    webpToMp4,
+    cropVideo,
+    cropImage,
+    resizeMedia,
+    mediaRotate,
+    imageMeta,
+    videoMeta,
+    videoToAudio,
+    editAudioMeta
 } from "../lib/index.js"
 
 import fs from 'fs';
 import axios from 'axios';
-import ffmpeg from 'fluent-ffmpeg';
 
+const safeDelete = (files) => {
+    const targets = Array.isArray(files) ? files : [files];
+    targets.forEach(file => {
+        if (file && fs.existsSync(file)) fs.unlinkSync(file);
+    });
+};
 
 Command({
     pattern: 'spotify ?(.*)',
@@ -97,18 +104,14 @@ Command({
     desc: lang.plugins.view.desc,
     type: 'media'
 }, async (message) => {
-    if (!message.quoted?.viewOnce)
-        return message.send(lang.plugins.view.reply_vv);
-
-    const quoted = message.quoted;
-
-    (function clean(obj) {
-        if (obj && typeof obj === 'object') {
-            delete obj.viewOnce;
-            for (const val of Object.values(obj)) clean(val);
-        }
-    })(quoted);
-
+    const { quoted } = message;
+    if (!quoted?.viewOnce) return message.send(lang.plugins.view.reply_vv);
+    const clean = (obj) => {
+        if (!obj || typeof obj !== 'object') return;
+        delete obj.viewOnce;
+        Object.values(obj).forEach(clean);
+    };
+    clean(quoted);
     await message.send({ forward: quoted });
 });
 
@@ -121,18 +124,37 @@ Command({
     react: false,
     sudo: true
 }, async (message) => {
-    if (!message.quoted) return message.send(lang.plugins.save.reply_required);
+    const { quoted, botJid } = message;
+    if (!quoted) return message.send(lang.plugins.save.reply_required);
+    const clean = (o) => {
+        if (!o || typeof o !== 'object') return;
+        delete o.viewOnce;
+        Object.values(o).forEach(clean);
+    };
+    clean(quoted);
+    await message.send({ forward: quoted }, {}, botJid);
+});
 
-    const quoted = message.quoted;
 
-    (function clean(obj) {
-        if (obj && typeof obj === 'object') {
-            delete obj.viewOnce;
-            for (const val of Object.values(obj)) clean(val);
-        }
-    })(quoted);
-
-    await message.send({ forward: quoted }, {}, message.botJid);
+Command({
+    pattern: 'forward',
+    aliases: ['frd', 'frwd'],
+    desc: lang.plugins.forward.desc,
+    type: 'misc'
+}, async (message, match) => {
+    const { quoted } = message;
+    if (!quoted) return message.send(lang.plugins.forward.reply_required);
+    const clean = (obj) => {
+        if (!obj || typeof obj !== 'object') return;
+        delete obj.viewOnce;
+        Object.values(obj).forEach(clean);
+    };
+    clean(quoted);
+    const jids = match ? match.split(',').map(v => v.trim()) : [message.jid];
+    for (const jid of jids) {
+        if (jids.length > 1) await wait(2000);
+        await message.send({ forward: quoted }, {}, jid);
+    }
 });
 
 
@@ -141,15 +163,14 @@ Command({
     desc: lang.plugins.toimg.desc,
     type: 'media'
 }, async (message) => {
-    try {
-        if (!message.quoted?.sticker || message.quoted.sticker.animated) return message.send(lang.plugins.toimg.reply_required);
+    const { quoted } = message;
+    if (!quoted?.sticker || quoted.animated) return message.send(lang.plugins.toimg.reply_required);
 
-        const buffer = await downLoad(message.quoted, 'buffer');
-        if (!buffer) return message.send(lang.plugins.toimg.download_failed);
-        const imagePath = await webpToImage(buffer, 'png');
-        const imageBuffer = fs.readFileSync(imagePath);
-        await message.send({ image: imageBuffer });
-        fs.unlinkSync(imagePath);
+    try {
+        const buff = await downLoad(quoted, 'buffer');
+        if (!buff) return message.send(lang.plugins.toimg.download_failed);
+        const img = await webpToImage(buff, 'png', true);
+        await message.send({ image: img });
     } catch {
         message.send(lang.plugins.toimg.conversion_failed);
     }
@@ -161,98 +182,84 @@ Command({
     desc: lang.plugins.tomp4.desc,
     type: 'media'
 }, async (message) => {
+    const sticker = message.quoted?.sticker;
+    if (!sticker || !sticker.animated) return message.send(lang.plugins.tomp4.reply_required);
+
+    const stickerPath = await downLoad(message.quoted, 'path');
+    if (!stickerPath) return message.send(lang.plugins.tomp4.download_failed);
+
     try {
-        if (!message.quoted?.sticker || !message.quoted.sticker.animated) 
-            return message.send(lang.plugins.tomp4.reply_required);
-
-        const stickerPath = await downLoad(message.quoted, 'path');
-        if (!stickerPath) return message.send(lang.plugins.tomp4.download_failed);
-
         const mp4Path = await webpToMp4(stickerPath);
         await message.send({ video: fs.readFileSync(mp4Path) });
-
-        fs.unlinkSync(mp4Path);
-        fs.unlinkSync(stickerPath);
+        safeDelete(mp4Path);
     } catch {
         message.send(lang.plugins.tomp4.conversion_failed);
+    } finally {
+        safeDelete(stickerPath);
     }
 });
+
 
 Command({
     pattern: 'crop ?(.*)',
     desc: lang.plugins.crop.desc,
     type: 'media'
 }, async (message, match) => {
-    const target = message.video || message.image || message.quoted?.video || message.quoted?.image;
-    if (!target) return message.send(lang.plugins.crop.reply_required);
+    const isVid = !!(message.video || message.quoted?.video);
+    const isImg = !!(message.image || message.quoted?.image);
+    if (!isVid && !isImg) return message.send(lang.plugins.crop.reply_required);
 
-    if (!match) {
-        const data = await downLoad(message.raw, 'both');
-        return new Promise((res) => {
-            ffmpeg(data.path).ffprobe((err, meta) => {
-                if (err) return message.send(lang.plugins.crop.failed_info);
-                const { width, height } = meta.streams[0];
-                message.send(`*Dimensions:* ${width}x${height}`);
-                cleanup([data.path]);
-                res();
-            });
-        });
+    const input = (match || '').trim();
+    const data = await downLoad(message.quoted || message, 'path');
+
+    if (!input) {
+        const meta = isVid ? await videoMeta(data) : await imageMeta(data);
+        safeDelete(data);
+        return message.send(`*Dimensions:* ${meta?.width || 0}x${meta?.height || 0}`);
     }
 
-    const input = match.trim();
-    let options = { returnPath: true };
+    const options = { returnPath: true };
+    const [dim, coords] = input.includes('-') ? input.split('-') : [input, null];
+    const [x, y] = coords ? coords.split(',').map(Number) : [null, null];
 
-    if (input.includes('-')) {
-        const [dim, coords] = input.split('-');
-        const [x, y] = coords.split(',').map(Number);
-        if (dim.includes(':')) options.ratio = dim;
-        else [options.width, options.height] = dim.split('x').map(Number);
-        options.x = x;
-        options.y = y;
-    } else {
-        if (input.includes(':')) options.ratio = input;
-        else [options.width, options.height] = input.split('x').map(Number);
-    }
-
-    if (!resultPath) return message.send(lang.plugins.crop.failed);
+    dim.includes(':') ? (options.ratio = dim) : ([options.width, options.height] = dim.split('x').map(Number));
+    if (x !== null) Object.assign(options, { x, y });
 
     try {
-        const isVideo = message.video || message.quoted?.video;
-        if (isVideo) {
-            await message.send({ video: { url: resultPath } });
-        } else {
-            await message.send({ image: { url: resultPath } });
-        }
+        const result = isVid ? await cropVideo(data, options) : await cropImage(data, options);
+        if (!result) return message.send(lang.plugins.crop.failed);
+
+        await message.send(isVid ? { video: { url: result } } : { image: { url: result } });
+        safeDelete(result);
+    } catch {
+        message.send(lang.plugins.crop.failed);
     } finally {
-        if (fs.existsSync(resultPath)) fs.unlinkSync(resultPath);
+        safeDelete(data);
     }
 });
+
 
 Command({
     pattern: 'resize ?(.*)',
     desc: lang.plugins.resize.desc,
     type: 'media'    
 }, async (message, match) => {
-    const target = message.video || message.image || message.quoted?.video || message.quoted?.image;
-    if (!target) return message.send(lang.plugins.resize.reply_required);
-    if (!match) return message.send(lang.plugins.resize.usage);
+    const isVid = !!(message.video || message.quoted?.video);
+    const isImg = !!(message.image || message.quoted?.image);
+    if (!isVid && !isImg) return message.send(lang.plugins.resize.reply_required);
 
-    const parts = match.trim().split(/\s+/);
-    const size = parts[0];
-    const fitMode = parts[1] || 'contain';
+    const input = (match || '').trim();
+    if (!input) return message.send(lang.plugins.resize.usage);
 
-    const resizedPath = await resizeMedia(message.raw, size, { fit: fitMode });
+    const [size, fitMode = 'contain'] = input.split(/\s+/);
+    const resizedPath = await resizeMedia(message.quoted || message, size, { fit: fitMode });
     
     if (!resizedPath) return message.send(lang.plugins.resize.failed);
 
     try {
-        if (message.video || message.quoted?.video) {
-            await message.send({ video: { url: resizedPath } });
-        } else {
-            await message.send({ image: { url: resizedPath } });
-        }
+        await message.send(isVid ? { video: { url: resizedPath } } : { image: { url: resizedPath } });
     } finally {
-        if (fs.existsSync(resizedPath)) fs.unlinkSync(resizedPath);
+        safeDelete(resizedPath);
     }
 });
 
@@ -262,19 +269,21 @@ Command({
     desc: lang.plugins.rotate.desc,
     type: 'media'  
 }, async (message, match) => {
-    const isVideo = message.video || message.quoted?.video;
-    const isImage = message.image || message.quoted?.image;
+    const isVid = !!(message.video || message.quoted?.video);
+    const isImg = !!(message.image || message.quoted?.image);
 
-    if (!isVideo && !isImage) return message.send(lang.plugins.rotate.reply_required);
-    if (!match) return message.send(lang.plugins.rotate.usage);
+    if (!isVid && !isImg) return message.send(lang.plugins.rotate.reply_required);
+    
+    const angle = match?.trim();
+    if (!angle) return message.send(lang.plugins.rotate.usage);
 
-    const rotated = await mediaRotate(message.raw, match.trim());
+    const rotated = await mediaRotate(message.quoted || message, angle);
     if (!rotated) return message.send(lang.plugins.rotate.failed);
 
-    if (isVideo) {
-        await message.send({ video: { url: rotated } });
-    } else {
-        await message.send({ image: { url: rotated } });
+    try {
+        await message.send(isVid ? { video: { url: rotated } } : { image: { url: rotated } });
+    } finally {
+        safeDelete(rotated);
     }
 });
 
@@ -285,31 +294,30 @@ Command({
     desc: lang.plugins.tomp3.desc,
     type: 'media'
 }, async (message, match) => {
-    const video = message.video || message.quoted?.video;
-    const audio = message.audio || message.quoted?.audio;
-    
-    if (!video && !audio) return message.send(lang.plugins.tomp3.noMedia);
+    const isVid = !!(message.video || message.quoted?.video);
+    const isAud = !!(message.audio || message.quoted?.audio);
+    if (!isVid && !isAud) return message.send(lang.plugins.tomp3.noMedia);
 
     try {
         const title = match?.trim() || undefined;
-        let audioBuffer;
+        const target = message.quoted || message;
+        
+        const audio = isVid 
+            ? await videoToAudio(target, { format: 'mp3', quality: '128k', title })
+            : await editAudioMeta(target, title);
 
-        if (video) {
-            audioBuffer = await videoToAudio(message.raw, { format: 'mp3', quality: '128k', title });
-        } else {
-            audioBuffer = await editAudioMeta(message.raw, title);
-        }
+        if (!audio) return message.send(lang.plugins.tomp3.failed);
 
-        if (!audioBuffer) return message.send(lang.plugins.tomp3.failed);
-
-        const fileName = title ? `${title.replace(/[^\w\s.-]/g, '_')}.mp3` : `manji_audio_${Date.now()}.mp3`;
+        const fileName = title ? `${title.replace(/[^\w\s.-]/g, '_')}.mp3` : `audio_${Date.now()}.mp3`;
 
         await message.send({
-            audio: audioBuffer,
+            audio: Buffer.isBuffer(audio) ? audio : { url: audio },
             mimetype: 'audio/mpeg',
             fileName
         });
+
+        if (typeof audio === 'string') safeDelete(audio);
     } catch {
-        await message.send(lang.plugins.tomp3.failed);
+        message.send(lang.plugins.tomp3.failed);
     }
 });
