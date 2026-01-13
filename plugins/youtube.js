@@ -1,51 +1,50 @@
-/*Under Construction ---
-
-
-import { Command, manjitube, lang } from '../lib/index.js';
+import { Command, yt, lang } from '../lib/index.js';
 
 Command({
     pattern: 'yta ?(.*)',
     desc: lang.plugins.yta.desc,
-    type: 'media'
+    type: 'download',
 }, async (message, match) => {
-    const url = match || message.quoted?.text;
-    if (!url || !/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)/.test(url)) {
-        return message.send(lang.plugins.yta.no_url);
-    }
-    
-    const id = manjitube.extractId(url);
-    if (!id) return message.send(lang.plugins.yta.no_url);
-    
+    const input = match || message.quoted?.text;
+    if (!input) return await message.send(lang.plugins.yta.no_url);
+
     try {
-        const { path, buffer, title } = await manjitube.download(id, 'audio');
-        await message.send({ audio: buffer, mimetype: 'audio/mpeg', fileName: `${title}.mp3` });
-        manjitube.cleanup(path);
-    } catch (e) {
-        console.error('[YTA Error]:', e.message);
-        return message.send(lang.plugins.yta.fail);
+        const { path, buffer, title } = await yt.get(input, 'audio');
+
+        await message.send({ 
+            audio: buffer, 
+            mimetype: 'audio/mp4', 
+            fileName: `${title}.m4a` 
+        });
+
+        return await yt.cls(path);
+    } catch {
+        return await message.send(lang.plugins.yta.fail);
     }
 });
+
 
 Command({
     pattern: 'ytv ?(.*)',
     desc: lang.plugins.ytv.desc,
-    type: 'media'
+    type: 'download',
 }, async (message, match) => {
-    const url = match || message.quoted?.text;
-    if (!url || !/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)/.test(url)) {
-        return message.send(lang.plugins.ytv.no_url);
-    }
-    
-    const id = manjitube.extractId(url);
-    if (!id) return message.send(lang.plugins.ytv.no_url);
-    
+    const input = match || message.quoted?.text;
+    if (!input) return await message.send(lang.plugins.ytv.no_url);
+
+    const q = input.match(/\b(144|240|360|480|720|1080)\b/)?.[0] || '360';
+    const query = input.replace(q, '').trim();
+
     try {
-        const { path, buffer, title } = await manjitube.download(id, 'video');
-        await message.send({ video: buffer, caption: title, fileName: `${title}.mp4` });
-        manjitube.cleanup(path);
-    } catch (e) {
-        console.error('[YTV Error]:', e.message);
-        return message.send(lang.plugins.ytv.fail);
+        const { path, buffer, title } = await yt.get(query, 'video', q);
+
+        await message.send({ 
+            video: buffer, 
+            fileName: `${title}.mp4` 
+        });
+
+        return await yt.cls(path);
+    } catch {
+        return await message.send(lang.plugins.ytv.fail);
     }
 });
-*/

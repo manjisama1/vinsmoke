@@ -32,7 +32,7 @@ Command({
     pattern: 'spotify ?(.*)',
     aliases: ['sp', 'song'],
     desc: lang.plugins.spotify.desc,
-    type: 'media',
+    type: 'download',
 }, async (message, match) => {
     const url =
         match?.trim() ||
@@ -77,7 +77,7 @@ Command({
     pattern: 'instagram ?(.*)',
     aliases: ['ig', 'insta'],
     desc: lang.plugins.instagram.desc,
-    type: 'media',
+    type: 'download',
 }, async (message, match) => {
     const url = match?.trim() || message.quoted?.text?.match(/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+/)?.[0];
     

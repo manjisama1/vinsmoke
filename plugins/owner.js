@@ -6,151 +6,87 @@ Command({
     desc: lang.plugins.var.desc,
     type: 'owner',
     sudo: true,
-}, async (message, match, manji) => {
+}, async (msg, match, manji) => {
     const prefix = config.PREFIX || '.';
     const args = match?.trim()?.split(' ') || [];
     const action = args[0]?.toLowerCase();
+    if (!action) return await msg.send(lang.plugins.var.usage.format(prefix));
+
+    const input = args.slice(1).join(' ');
+    const isMutation = ['set', 'add', 'edit'].includes(action);
+
+    if (isMutation) {
+        let key, val;
+        if (msg.quoted) {
+            key = input.trim().toUpperCase();
+            val = msg.quoted.text;
+        } else {
+            if (!input.includes('=')) return await msg.send(lang.plugins.var[action].usage.format(prefix));
+            const parts = input.split('=');
+            key = parts[0].trim().toUpperCase();
+            val = parts.slice(1).join('=').trim();
+        }
+
+        if (!key) return await msg.send(lang.plugins.var.set.failed.emptyKey);
+
+        const current = manji.envAll();
+        if (action === 'edit' && !current[key]) return await msg.send(lang.plugins.var.edit.notFound.format(key));
+
+        const success = action === 'add' ? manji.envAdd(key, val) : manji.envSet(key, val);
+        return await msg.send(success ? lang.plugins.var[action].success.format(key, val) : lang.plugins.var.set.failed.generic);
+    }
 
     switch (action) {
-        case undefined: {
-            return await message.send(lang.plugins.var.usage.format(prefix));
-        }
+        case 'all':
+            const all = manji.envAll();
+            return await msg.send(manji.envDisplay(all, { maskSensitive: !msg.isSudo }) || lang.plugins.var.all.empty);
 
-        case 'set': {
-            const input = args.slice(1).join(' ');
-            if (!input || !input.includes('=')) {
-                return await message.send(lang.plugins.var.set.usage.format(prefix));
-            }
+        case 'del':
+            const delKey = args[1]?.toUpperCase();
+            if (!delKey) return await msg.send(lang.plugins.var.del.usage.format(prefix));
+            return await msg.send(manji.envDelete(delKey) ? lang.plugins.var.del.success.format(delKey) : lang.plugins.var.set.failed.generic);
 
-            const [rawKey, ...valParts] = input.split('=');
-            const key = rawKey.trim();
-            const value = valParts.join('=').trim();
+        case 'see':
+            const seeKey = args[1]?.toUpperCase();
+            if (!seeKey) return await msg.send(lang.plugins.var.see.usage.format(prefix));
+            const vars = manji.envAll();
+            return await msg.send(vars[seeKey] ? lang.plugins.var.see.value.format(seeKey, vars[seeKey]) : lang.plugins.var.see.notFound.format(seeKey));
 
-            if (!key) return await message.send(lang.plugins.var.set.failed.emptyKey);
+        case 'help':
+            return await msg.send(lang.plugins.var.help.format(prefix));
 
-            const success = manji.envSet(key, value);
-            if (success) {
-                return await message.send(lang.plugins.var.set.success.format(key.toUpperCase(), value));
-            }
-            return await message.send(lang.plugins.var.set.failed.generic);
-        }
-
-        case 'all': {
-            const allVars = manji.envAll();
-            const display = manji.envDisplay(allVars, { maskSensitive: !message.isSudo });
-            return await message.send(display || lang.plugins.var.all.empty);
-        }
-
-        case 'del': {
-            const key = args[1]?.toUpperCase();
-            if (!key) return await message.send(lang.plugins.var.del.usage.format(prefix));
-
-            const success = manji.envDelete(key);
-            if (success) {
-                return await message.send(lang.plugins.var.del.success.format(key));
-            }
-            return await message.send(lang.plugins.var.set.failed.generic);
-
-        }
-
-        case 'add': {
-            const input = args.slice(1).join(' ');
-            if (!input || !input.includes('=')) {
-                return await message.send(lang.plugins.var.add.usage.format(prefix));
-            }
-
-            const [rawKey, ...valParts] = input.split('=');
-            const key = rawKey.trim();
-            const value = valParts.join('=').trim();
-
-            if (!key) return await message.send(lang.plugins.var.set.failed.emptyKey);
-
-            const success = manji.envAdd(key, value);
-            if (success) {
-                return await message.send(lang.plugins.var.add.success.format(key.toUpperCase()));
-            }
-            return await message.send(lang.plugins.var.set.failed.generic);
-        }
-
-        case 'edit': {
-            const input = args.slice(1).join(' ');
-            if (!input || !input.includes('=')) {
-                return await message.send(lang.plugins.var.edit.usage.format(prefix));
-            }
-
-            const [rawKey, ...valParts] = input.split('=');
-            const key = rawKey.trim().toUpperCase();
-            const value = valParts.join('=').trim();
-
-            if (!key) return await message.send(lang.plugins.var.set.failed.emptyKey);
-
-            const allVars = manji.envAll();
-            if (!allVars[key]) {
-                return await message.send(lang.plugins.var.edit.notFound.format(key));
-            }
-
-            const success = manji.envSet(key, value);
-            if (success) {
-                return await message.send(lang.plugins.var.edit.success.format(key, value));
-            }
-            return await message.send(lang.plugins.var.set.failed.generic);
-        }
-
-        case 'see': {
-            const key = args[1]?.toUpperCase();
-            if (!key) return await message.send(lang.plugins.var.see.usage.format(prefix));
-
-            const allVars = manji.envAll();
-            if (!allVars[key]) {
-                return await message.send(lang.plugins.var.see.notFound.format(key));
-            }
-
-            return await message.send(lang.plugins.var.see.value.format(key, allVars[key]));
-        }
-
-        case 'help': {
-            return await message.send(lang.plugins.var.help.format(prefix));
-        }
-
-        default: {
-            return await message.send(lang.plugins.var.unknown.format(action));
-        }
+        default:
+            return await msg.send(lang.plugins.var.unknown.format(action));
     }
 });
 
 
 Command({
     pattern: 'setsudo ?(.*)',
-    desc: lang.plugins.setsudo.desc,
+    desc: 'Add sudo users',
     type: 'owner',
-    sudo: true,
-}, async (message, match, manji) => {
-    const jid = (message.key.remoteJid);
-    if (jid.endsWith("@g.us")) return message.send(lang.plugins.setsudo.pmOnly);
-    const jids = [
-        message.key.remoteJid,
-        message.key.remoteJidAlt
+    owner: true
+}, async (msg, match, manji) => {
+    const targets = [
+        ...msg.mention,
+        msg.quoted?.lid,
+        !msg.isGroup ? msg.key.remoteJid : null,
+        !msg.isGroup ? msg.key.remoteJidAlt : null
     ].filter(Boolean);
 
-    if (!jids.length) return message.send(lang.plugins.setsudo.noUser);
+    if (!targets.length) return await msg.send('_Provide a user via mention, quote, or PM_');
 
-    const currentSudo = manji.envList('SUDO');
-    const addedUsers = [];
-    const alreadyExists = [];
+    const current = manji.envList('SUDO');
+    const added = [];
+    const exists = [];
 
-    for (let jid of jids) {
-        const phone = jid.split(/[:@]/)[0];
+    [...new Set(targets)].forEach(t => {
+        const phone = t.split(/[:@]/)[0];
+        current.includes(phone) ? exists.push(phone) : manji.envAdd('SUDO', phone) && added.push(phone);
+    });
 
-        if (currentSudo.includes(phone)) {
-            alreadyExists.push(phone);
-        } else {
-            const success = manji.envAdd('SUDO', phone);
-            if (success) addedUsers.push(phone);
-        }
-    }
-
-    if (addedUsers.length) await message.send(lang.plugins.setsudo.added.format(addedUsers.join(', ')));
-    if (alreadyExists.length) await message.send(lang.plugins.setsudo.exists.format(alreadyExists.join(', ')));
+    if (added.length) await msg.send(`_Added: ${added.join(', ')}_`);
+    if (exists.length) await msg.send(`_Already sudo: ${exists.join(', ')}_`);
 });
 
 
@@ -158,35 +94,28 @@ Command({
     pattern: 'delsudo ?(.*)',
     desc: 'Remove sudo users',
     type: 'owner',
-    sudo: true,
-}, async (message, match, manji) => {
-    const jid = message.key.remoteJid;
-    if (jid.endsWith("@g.us")) return message.send(lang.plugins.delsudo.pmOnly);
-
-    const jids = [
-        message.key.remoteJid,
-        message.key.remoteJidAlt
+    owner: true
+}, async (msg, match, manji) => {
+    const targets = [
+        ...msg.mention,
+        msg.quoted?.lid,
+        !msg.isGroup ? msg.key.remoteJid : null,
+        !msg.isGroup ? msg.key.remoteJidAlt : null
     ].filter(Boolean);
 
-    if (!jids.length) return message.send(lang.plugins.delsudo.noUser);
+    if (!targets.length) return await msg.send('_Provide a user via mention, quote, or PM_');
 
     const removed = [];
     const notFound = [];
 
-    for (let jid of jids) {
-        const phone = jid.split(/[:@]/)[0];
-        const success = manji.envRemove('SUDO', phone);
+    [...new Set(targets)].forEach(t => {
+        const phone = t.split(/[:@]/)[0];
+        manji.envRemove('SUDO', phone) ? removed.push(phone) : notFound.push(phone);
+    });
 
-        if (success) removed.push(phone);
-        else notFound.push(phone);
-    }
-
-    if (removed.length)
-        await message.send(lang.plugins.delsudo.removed.format(removed.join(', ')));
-    if (notFound.length)
-        await message.send(lang.plugins.delsudo.notFound.format(notFound.join(', ')));
+    if (removed.length) await msg.send(`_Removed: ${removed.join(', ')}_`);
+    if (notFound.length) await msg.send(`_Not found: ${notFound.join(', ')}_`);
 });
-
 
 
 Command({
