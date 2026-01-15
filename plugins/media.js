@@ -140,7 +140,7 @@ Command({
     pattern: 'forward',
     aliases: ['frd', 'frwd'],
     desc: lang.plugins.forward.desc,
-    type: 'misc'
+    type: 'tools'
 }, async (message, match) => {
     const { quoted } = message;
     if (!quoted) return message.send(lang.plugins.forward.reply_required);

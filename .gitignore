@@ -1,8 +1,6 @@
-plugins/cardgame.js
-plugins/survival.js
-plugins/bank.js
 package-lock.json
 plugins/test.js
+plugins/game.js
 node_modules/
 lib/game.js
 config.env

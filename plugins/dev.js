@@ -59,13 +59,31 @@ Command({
 
 
 Command({
-    pattern: 'db ?(.*)',
-    desc: lang.plugins.db.desc,
+    pattern: 'log ?(.*)',
+    desc: 'Evaluate and log context',
     type: 'dev',
     sudo: true
-}, async (message) => {
-    const data = message.quoted || message.raw;
-    const json = JSON.stringify(data, null, 2);
-    await message.send(`\`\`\`json\n${json}\n\`\`\``);
-    console.log(data);
+}, async (message, match) => {
+    const query = match?.trim();
+    const data = message.quoted || message;
+
+    if (!query) {
+        const json = JSON.stringify(data, null, 2);
+        await message.send(`\`\`\`json\n${json}\n\`\`\``);
+        return console.log(data);
+    }
+
+    try {
+        const evalFn = new Function('message', 'match', `return ${query}`);
+        const result = evalFn(message, match);
+
+        const output = typeof result === 'object' 
+            ? JSON.stringify(result, null, 2) 
+            : String(result);
+
+        await message.send(`\`\`\`json\n${output}\n\`\`\``);
+        console.log(result);
+    } catch (e) {
+        await message.reply(`Error: ${e.message}`);
+    }
 });

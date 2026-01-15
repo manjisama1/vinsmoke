@@ -512,7 +512,7 @@ Command({
 Command({
     pattern: 'join ?(.*)',
     desc: lang.plugins.joinGroup.desc,
-    type: 'general',
+    type: 'owner',
 }, async (message, match, manji) => {
     const isSudo = message.fromMe 
         || manji.envList('SUDO').includes(message.sender) 
@@ -537,7 +537,7 @@ Command({
 Command({
     pattern: 'ginfo ?(.*)',
     desc: 'Shows group information via link or JID',
-    type: 'general',
+    type: 'owner',
 }, async (message, match, manji) => {
     const isSudo = message.fromMe 
         || manji.envList('SUDO').includes(message.sender) 

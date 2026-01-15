@@ -457,7 +457,7 @@
       "finished": "Tracking completed: {0}",
       "usage": "Usage: .track [a|b] <count>\na = advance, b = basic"
     },
-    "db": {
+    "log": {
       "desc": "Debug message structure"
     },
     "pinterest": {
