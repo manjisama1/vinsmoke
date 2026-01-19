@@ -402,7 +402,6 @@ Command({
 
 Command({
     pattern: 'invite',
-    aliases: ['inv'],
     desc: lang.plugins.invite.desc,
     type: 'group',
     group: true,

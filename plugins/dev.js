@@ -58,6 +58,7 @@ Command({
 });
 
 
+
 Command({
     pattern: 'log ?(.*)',
     desc: 'Evaluate and log context',
@@ -65,25 +66,22 @@ Command({
     sudo: true
 }, async (message, match) => {
     const query = match?.trim();
-    const data = message.quoted || message;
-
-    if (!query) {
-        const json = JSON.stringify(data, null, 2);
-        await message.send(`\`\`\`json\n${json}\n\`\`\``);
-        return console.log(data);
-    }
+    const target = message.quoted || message.raw;
 
     try {
-        const evalFn = new Function('message', 'match', `return ${query}`);
-        const result = evalFn(message, match);
+        if (!query) {
+            const output = util.inspect(target, { depth: 1, showHidden: false });
+            return await message.send(`\`\`\`javascript\n${output}\n\`\`\``);
+        }
 
-        const output = typeof result === 'object' 
-            ? JSON.stringify(result, null, 2) 
-            : String(result);
+        let result = await eval(query);
+        
+        const output = typeof result === 'string' 
+            ? result 
+            : util.inspect(result, { depth: 1 });
 
-        await message.send(`\`\`\`json\n${output}\n\`\`\``);
-        console.log(result);
+        await message.send(`\`\`\`javascript\n${output}\n\`\`\``);
     } catch (e) {
-        await message.reply(`Error: ${e.message}`);
+        await message.send(`*Error:* ${e.message}`);
     }
 });
