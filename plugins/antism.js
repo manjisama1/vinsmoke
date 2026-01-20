@@ -11,51 +11,52 @@ Anti.register(type, {
         const { status, count, limit } = res;
         if (['no_permission', 'error'].includes(status)) return;
 
-        const user = msg.sender.split('@')[0];
-        const mentions = { mentions: [msg.sender] };
+        const u = msg.sender.split('@')[0];
+        const opt = { mentions: [msg.sender] };
 
         if (status === 'warned') 
-            return await msg.send(`@${user} Hidden mentions not allowed! [${count}/${limit}]`, mentions);
+            return await msg.send(lang.plugins.antism.warning.format(u, count, limit), opt);
         
         if (status.startsWith('kicked')) 
-            return await msg.send(`@${user} Kicked for hidden mentions.`, mentions);
+            return await msg.send(lang.plugins.antism.kicked.format(u), opt);
     }
 });
 
+
 Command({
     pattern: 'antism ?(.*)',
-    desc: 'Toggle anti-status mention',
+    desc: lang.plugins.antism.desc,
     type: 'group',
     group: true
 }, async (message, match, manji) => {
     if (!await manji.isBotAdmin(message.chat)) 
-        return await message.send(lang.plugins.antilink.botNotAdmin);
+        return await message.send(lang.plugins.antism.botNotAdmin);
 
     if (!message.fromMe && !await message.admin()) 
-        return await message.send(lang.plugins.antilink.notAllowed);
+        return await message.send(lang.plugins.antism.notAllowed);
 
     const cmd = match.trim().toLowerCase();
-    if (!cmd) return await message.send('Usage: antism on/off/kick/warn/delete');
+    const prefix = message.prefix;
 
     if (cmd === 'on') {
         Anti.updateSettings(message.chat, type, 'enabled', 1);
-        return await message.send('AntiSM: ON');
+        return await message.send(lang.plugins.antism.enabled);
     }
 
     if (cmd === 'off') {
         Anti.updateSettings(message.chat, type, 'enabled', 0);
-        return await message.send('AntiSM: OFF');
+        return await message.send(lang.plugins.antism.disabled);
     }
 
     if (['kick', 'warn', 'delete'].includes(cmd)) {
         Anti.updateSettings(message.chat, type, 'action', cmd);
-        return await message.send(`AntiSM Action: ${cmd.toUpperCase()}`);
+        return await message.send(lang.plugins.antism.action.format(cmd.toUpperCase()));
     }
 
     if (cmd === 'info') {
         const { enabled, action } = Anti.getData(message.chat, type);
-        return await message.send(`AntiSM: ${enabled ? 'ON' : 'OFF'}\nAction: ${action.toUpperCase()}`);
+        return await message.send(lang.plugins.antism.info.format(enabled ? 'ON' : 'OFF', action.toLowerCase()));
     }
 
-    await message.send('Invalid command');
+    return await message.send(lang.plugins.antism.usage.format(prefix));
 });

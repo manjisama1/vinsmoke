@@ -301,6 +301,19 @@
       "kickedWord": "@{0} removed for words",
       "wordUsage": "{0}antiword {1} word1,word2,word3"
     },
+    "antism": {
+      "desc": "Manage status mention protection",
+      "usage": "*Usage:* {0}antism on/off | kick/warn/delete | info",
+      "notAllowed": "You don't have permission",
+      "botNotAdmin": "Bot needs admin",
+      "enabled": "Anti-StatusMention enabled",
+      "disabled": "Anti-StatusMention disabled",
+      "action": "Action: {0}",
+      "info": "Status: {0}\nAction: {1}",
+      "invalid": "Invalid command",
+      "warning": "@{0} [{1}/{2}] Hidden mentions forbidden",
+      "kicked": "@{0} removed for hidden mentions"
+    },
     "ban": {
       "desc": "Ban users from the group",
       "unbanDesc": "Unban users from the group",
