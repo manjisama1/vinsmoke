@@ -133,14 +133,13 @@ Command({
     pattern: 'ws ?(.*)',
     desc: lang.plugins.ws.desc,
     type: 'sticker'
-
 }, async (message, match, manji) => {
     const text = message.quoted?.text || match?.trim();
     if (!text) return message.send(lang.plugins.ws.noText);
     
     try {
         const senderName = message.quoted?.name || message.name || 'User';
-        const timeText = formatTime(message.quoted?.time || message.time);
+        const timeText = formatTime(message.quoted?.timestamp || message.timestamp);
         const senderJid = message.quoted?.sender || message.sender;
         
         let profilePicUrl;
