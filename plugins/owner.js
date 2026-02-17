@@ -63,58 +63,76 @@ Command({
 
 Command({
     pattern: 'setsudo ?(.*)',
-    desc: 'Add sudo users',
+    desc: lang.plugins.setsudo.desc,
     type: 'owner',
     owner: true
-}, async (msg, match, manji) => {
+}, async (message, _, manji) => {
     const targets = [
-        ...msg.mention,
-        msg.quoted?.lid,
-        !msg.isGroup ? msg.key.remoteJid : null,
-        !msg.isGroup ? msg.key.remoteJidAlt : null
+        ...message.mention,
+        message.quoted?.lid,
+        !message.isGroup ? message.key.remoteJid : null
     ].filter(Boolean);
 
-    if (!targets.length) return await msg.send('_Provide a user via mention, quote, or PM_');
+    if (!targets.length) return await message.send(lang.plugins.setsudo.provide);
 
     const current = manji.envList('SUDO');
     const added = [];
     const exists = [];
 
     [...new Set(targets)].forEach(t => {
-        const phone = t.split(/[:@]/)[0];
-        current.includes(phone) ? exists.push(phone) : manji.envAdd('SUDO', phone) && added.push(phone);
+        const id = t.split(/[:@]/)[0];
+        current.includes(id)
+        ? exists.push(id)
+        : manji.envAdd('SUDO', id) && added.push(id);
     });
 
-    if (added.length) await msg.send(`_Added: ${added.join(', ')}_`);
-    if (exists.length) await msg.send(`_Already sudo: ${exists.join(', ')}_`);
+    const response = [
+        added.length && lang.plugins.setsudo.added.format(added.map(v => `@${v}`).join(', ')),
+        exists.length && lang.plugins.setsudo.exists.format(exists.map(v => `@${v}`).join(', '))
+    ]
+        .filter(Boolean)
+        .join('\n');
+
+    await message.send(response, {
+        mentions: targets
+    });
 });
 
 
 Command({
     pattern: 'delsudo ?(.*)',
-    desc: 'Remove sudo users',
+    desc: lang.plugins.delsudo.desc,
     type: 'owner',
     owner: true
-}, async (msg, match, manji) => {
+}, async (message, _, manji) => {
     const targets = [
-        ...msg.mention,
-        msg.quoted?.lid,
-        !msg.isGroup ? msg.key.remoteJid : null,
-        !msg.isGroup ? msg.key.remoteJidAlt : null
+        ...message.mention,
+        message.quoted?.lid,
+        !message.isGroup ? message.key.remoteJid : null
     ].filter(Boolean);
 
-    if (!targets.length) return await msg.send('_Provide a user via mention, quote, or PM_');
+    if (!targets.length) return await message.send(lang.plugins.delsudo.provide);
 
     const removed = [];
     const notFound = [];
 
     [...new Set(targets)].forEach(t => {
-        const phone = t.split(/[:@]/)[0];
-        manji.envRemove('SUDO', phone) ? removed.push(phone) : notFound.push(phone);
+        const id = t.split(/[:@]/)[0];
+        manji.envRemove('SUDO', id)
+        ? removed.push(id)
+        : notFound.push(id);
     });
 
-    if (removed.length) await msg.send(`_Removed: ${removed.join(', ')}_`);
-    if (notFound.length) await msg.send(`_Not found: ${notFound.join(', ')}_`);
+    const response = [
+        removed.length && lang.plugins.delsudo.removed.format(removed.map(v => `@${v}`).join(', ')),
+        notFound.length && lang.plugins.delsudo.not_found.format(notFound.map(v => `@${v}`).join(', '))
+    ]
+        .filter(Boolean)
+        .join('\n');
+
+    await message.send(response, {
+        mentions: targets
+    });
 });
 
 

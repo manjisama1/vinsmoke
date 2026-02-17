@@ -57,18 +57,16 @@
       "help": "*Usage:*\n\n> {0}var set KEY=VALUE - Set variable\n> {0}var all - Get all variables\n> {0}var del KEY - Delete variable\n> {0}var add KEY=VALUE - Add variable\n> {0}var edit KEY=VALUE - Edit existing variable\n> {0}var see KEY - View variable value"
     },
     "setsudo": {
-      "desc": "Add sudo users to the bot",
-      "pmOnly": "Use in private chat",
-      "noUser": "Reply to a message or mention a user to add as sudo",
-      "added": "Added as sudo: *{0}*",
-      "exists": "Already sudo: *{0}*"
+      "desc": "Add users to sudo list",
+      "provide": "Provide a user",
+      "added": "Added: {0}",
+      "exists": "Already sudo: {0}"
     },
     "delsudo": {
-      "desc": "Remove sudo users",
-      "pmOnly": "Use in private chat",
-      "noUser": "Reply to a message or mention a user to remove from sudo",
-      "removed": "Sudo removed for: {0}",
-      "notFound": "Not found in sudo: {0}"
+      "desc": "Remove users from sudo list",
+      "provide": "Provide a user",
+      "removed": "Removed: {0}",
+      "not_found": "Not found: {0}"
     },
     "ping": {
       "desc": "Check bot response time",
@@ -492,7 +490,9 @@
       "add_error": "{0}: {1}",
       "queue_empty": "Queue empty",
       "queue_start": "Sending {0} {1}",
-      "queue_done": "Sent {0}"
+      "queue_done": "Sent {0}",
+      "no_links": "No valid links found in file",
+      "file_done": "Processed {0} items from file"
     },
     "ssize": {
       "desc": "View or update sticker crop/type settings",

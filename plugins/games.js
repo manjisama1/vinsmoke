@@ -362,10 +362,15 @@ Command({
           game = new Chess(message.chat, p1, p2, timeLimit);
 
     if (game.p2 === 'BOT' && game.turn === 'BOT') {
-        const mv = game.botMove();
-        if (mv) {
-            game.grid[mv.t] = game.grid[mv.f]; game.grid[mv.f] = null;
-            game.moved[mv.f] = game.moved[mv.t] = true;
+        try {
+            const mv = game.botMove();
+            if (mv) {
+                game.grid[mv.t] = game.grid[mv.f]; game.grid[mv.f] = null;
+                game.moved[mv.f] = game.moved[mv.t] = true;
+                game.turn = game.p1;
+            }
+        } catch (error) {
+            console.error('Bot move error:', error.message);
             game.turn = game.p1;
         }
     }
@@ -433,11 +438,16 @@ Listen({ on: 'text' }, async (message) => {
     game.turn = game.p2 === 'BOT' ? 'BOT' : (game.turn === game.p1 ? game.p2 : game.p1);
 
     if (game.p2 === 'BOT' && game.turn === 'BOT') {
-        const mv = game.botMove();
-        if (mv) {
-            if (game.grid[mv.t]) game.caps.B.push(game.grid[mv.t]);
-            game.grid[mv.t] = game.grid[mv.f]; game.grid[mv.f] = null;
-            game.moved[mv.f] = game.moved[mv.t] = true;
+        try {
+            const mv = game.botMove();
+            if (mv) {
+                if (game.grid[mv.t]) game.caps.B.push(game.grid[mv.t]);
+                game.grid[mv.t] = game.grid[mv.f]; game.grid[mv.f] = null;
+                game.moved[mv.f] = game.moved[mv.t] = true;
+                game.turn = game.p1;
+            }
+        } catch (error) {
+            console.error('Bot move error:', error.message);
             game.turn = game.p1;
         }
     }

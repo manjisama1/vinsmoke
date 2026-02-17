@@ -95,6 +95,40 @@ ANTI_DELETE=false         # Anti-delete protection
 LOGS=false               # Enable logging
 ```
 
+## Core APIs
+
+### Listen - Event System
+```javascript
+import { listen } from '../lib/index.js';
+
+listen.on('message.update', async (updates) => {
+    for (const { key, update } of updates) {
+        if (update?.message === null) console.log('Deleted:', key.id);
+    }
+});
+
+listen.on('message', async ({ messages, type }) => {
+    console.log('New messages:', messages.length);
+});
+
+listen.on('group.participants', async (data) => {
+    console.log('Group update:', data.id, data.action);
+});
+```
+
+**Available Events:**
+`message` `message.update` `message.delete` `receipt` `presence` `connection` `creds` `chat` `chat.update` `chat.delete` `contact` `contact.update` `group` `group.update` `group.participants` `block` `block.update` `call` `label` `label.assoc` `history` `lid` `phone.share`
+
+### Store - Message Storage
+```javascript
+import { store } from '../lib/index.js';
+
+const msg = store.get(messageId);
+const raw = store.getRaw(jid, messageId);
+const history = store.history(jid, 50);
+const stats = store.stats();
+```
+
 ## Plugin System
 
 ### Plugins site
