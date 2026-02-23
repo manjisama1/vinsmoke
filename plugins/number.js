@@ -44,6 +44,27 @@ Command({
     return message.send(numbers.join('\n'));
 });
 
+Command({
+  pattern: 'pfp ?(.*)',
+  desc: 'Fetch user profile picture',
+  type: 'tools',
+}, async (message, match, manji) => {
+  const input = match || message.quoted?.text || '';
+  if (!input) return message.send('Provide a number or JID');
+
+  const clean = input.replace(/[^0-9]/g, '');
+  const jid = input.includes('@s.whatsapp.net') ? input 
+    : clean ? `${clean}@s.whatsapp.net` 
+    : null;
+
+  if (!jid) return message.send('Invalid number or JID');
+
+  const url = await manji.fetchProfilePic(jid, 'high');
+
+  return url === 'https://i.imgur.com/dmxYQ8h.png'
+    ? message.send('_No profile picture found_')
+    : message.send({ image: { url } });
+});
 
 Command({
     pattern: "onwa ?(.*)",
