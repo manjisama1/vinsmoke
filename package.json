@@ -1,6 +1,6 @@
 {
   "name": "vinsmoke",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "WhatsApp bot built with Baileys",
   "type": "module",
   "main": "index.js",
@@ -34,8 +34,7 @@
     "qrcode-terminal": "^0.12.0",
     "qs": "^6.14.1",
     "sharp": "^0.34.5",
-    "youtube-search-api": "^2.0.1",
-    "yt-dlp-wrap": "^2.3.12"
+    "youtubei.js": "^17.0.1"
   },
   "engines": {
     "node": ">=22.0.0"

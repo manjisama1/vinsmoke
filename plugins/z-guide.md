@@ -528,3 +528,38 @@ try {
 ```
 
 This guide covers the essential patterns for creating WhatsApp bot plugins. Copy this to GPT and ask for specific plugin implementations!
+
+
+## message.code() — Syntax Highlighted Code
+
+Sends a syntax-highlighted code block rendered as a Meta AI-style message. Built into the `Message` class — no imports needed.
+
+```javascript
+await message.code(src, opts)
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `lang` | string | `'javascript'` | Language (`js`, `py`, `ts`, `go`, etc.) |
+| `origin` | string | `'UNKNOWN'` | Forward origin (`META_AI`, `UNKNOWN`, `USER_FORWARDED`) |
+| `forward` | boolean | `false` | Show as forwarded |
+| `score` | number | `1` | Forwarding score |
+| `botJid` | string | Meta AI bot JID | Override bot JID |
+| `intro` | string | — | Text block before code |
+| `outro` | string | — | Text block after code |
+
+```javascript
+// basic
+await message.code('console.log("hi")', { lang: 'js' });
+
+// with intro/outro text
+await message.code('print("hi")', {
+    lang: 'py',
+    intro: 'Here is an example:',
+    outro: 'Hope that helps!',
+    origin: 'META_AI',
+    forward: true,
+});
+```
+
+Short aliases for `lang`: `js` `ts` `py` `sh` `rb` `rs` `kt` `cs` `cpp` `c` `go` `java` `php` `swift` `lua` `html` `css` `json` `sql` `dart` `scala` `yaml` `toml` `xml` `md` `ps1` `ex` `hs` `clj` `pl`

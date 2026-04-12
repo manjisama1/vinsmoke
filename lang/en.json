@@ -683,6 +683,20 @@
       "desc": "Instant translation",
       "no_text": "Provide text or reply to a message",
       "no_target": "Provide text to translate"
+    },
+    "code": {
+      "desc": "Send syntax-highlighted code",
+      "usage": "> `.code` <code>\n> `.code js` <code>\n> `.code \\`\\`\\`js\\n<code>\\`\\`\\``\n> `.code <js> <code>`\n> Reply to file or code message\n> Flags: `-o META_AI` `-f` `-s 2`",
+      "no_code": "No code found after language tag",
+      "txt_lang": "Text file — add language: `.code js`",
+      "unknown_ext": "Unknown .{0} — add language: `.code js`",
+      "add_lang": "Add language: `.code js`",
+      "fence_lang": "Add language in fence: ` ```js `"
+    },
+    "table": {
+      "desc": "Send AI table message",
+      "usage": "> `.table` <data>\n> Mix text and tables using `---` as separator\n> Text: start with `text:` or any line without `|`\n> Table: `Header1|Header2\\nRow1|Row2`\n> Flags: `-o META_AI` `-f` `-s 2`",
+      "no_content": "No valid content found"
     }
   }
 }
