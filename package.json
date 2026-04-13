@@ -1,6 +1,6 @@
 {
   "name": "vinsmoke",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "description": "WhatsApp bot built with Baileys",
   "type": "module",
   "main": "index.js",
