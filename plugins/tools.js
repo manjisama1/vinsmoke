@@ -20,21 +20,16 @@ const fence = t => t?.match(/^```(\w+)?\n?([\s\S]*?)```$/s);
 const angle = t => t?.match(/^<(\w+)>\s*([\s\S]+)$/s);
 
 const parseOpts = str => {
-    const o = { origin: 'UNKNOWN', forward: false };
+    const o = {};
     const t = str.split(/\s+/);
     for (let i = 0; i < t.length; i++) {
-        if      (t[i] === '-o')  o.origin  = (t[++i] ?? 'META_AI').toUpperCase();
-        else if (t[i] === '-f')  o.forward = true;
-        else if (t[i] === '-nf') o.forward = false;
-        else if (t[i] === '-s')  o.score   = parseInt(t[++i] ?? '1');
-        else if (t[i] === '-b')  o.botJid  = t[++i];
-        else if (t[i] === '-i')  o.intro   = t[++i];
-        else if (t[i] === '-ot') o.outro   = t[++i];
+        if      (t[i] === '-i')  o.intro = t[++i];
+        else if (t[i] === '-ot') o.outro = t[++i];
     }
     return o;
 };
 
-const stripOpts = s => s.replace(/-o\s+\S+|-f\b|-nf\b|-s\s+\S+|-b\s+\S+|-i\s+\S+|-ot\s+\S+/g, '').trim();
+const stripOpts = s => s.replace(/-i\s+\S+|-ot\s+\S+/g, '').trim();
 
 Command({
     pattern: 'calculate ?(.*)',
@@ -179,13 +174,11 @@ Command({
 });
 
 Command({
-    pattern: 'table ?(.*)',
+    pattern: 'table (.*)',
     desc: lang.plugins.table.desc,
     type: 'tools',
 }, async (message, match) => {
-    const raw   = match?.trim() || message.quoted?.text?.trim() || '';
-    const opts  = parseOpts(raw);
-    const input = stripOpts(raw);
+    const input = (match?.trim() || message.quoted?.text?.trim() || '');
 
     if (!input) return message.send(lang.plugins.table.usage);
 
@@ -199,5 +192,5 @@ Command({
 
     if (!blocks.length) return message.send(lang.plugins.table.no_content);
 
-    await message.table(blocks, opts);
+    await message.table(blocks);
 });
