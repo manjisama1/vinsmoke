@@ -1,5 +1,61 @@
-import { Command, downLoad, lang, config, cleanupTemp, getCurrentHash, getLatestHash, hasUpdates, getCommits, updateToCommit } from '../lib/index.js';
+import { Command, downLoad, lang, config, settings, cleanupTemp, getCurrentHash, getLatestHash, hasUpdates, getCommits, updateToCommit } from '../lib/index.js';
 
+const p = () => config.PREFIX || '.';
+
+const AD_NS = 'autodelete';
+const AD_KEY = 'config';
+
+const AD_HELP = `*Auto Delete Help*
+
+*Destination (where to forward):*
+-h = here (same chat as deleted message)
+-o = own (bot's DM)
+<jid> = specific chat JID
+
+*Filter (which messages):*
+-gm = groups only
+-pm = private/DM only
+-g = all (default)
+
+*Source filter (only from these chats):*
+Provide JIDs after filter flag, comma-separated
+
+*Examples:*
+${p()}autodelete -h
+${p()}autodelete -o
+${p()}autodelete -h -pm
+${p()}autodelete -h -gm
+${p()}autodelete -o -pm
+${p()}autodelete 120363@g.us
+${p()}autodelete -o 120363@g.us
+${p()}autodelete -h -o -gm
+${p()}autodelete -h -gm 120363@g.us,994403@s.whatsapp.net
+${p()}autodelete 120363@g.us -pm 994403@s.whatsapp.net
+${p()}autodelete on / off
+
+*Flags:* -h=here  -o=own  -gm=groups  -pm=private  -g=all`;
+
+const isValidJid = (j) =>
+    j.endsWith('@g.us') || j.endsWith('@s.whatsapp.net') || j.endsWith('@lid');
+
+const parseAD = (arg) => {
+    const parts = arg.trim().split(/\s+/);
+    const targets = [];
+    let filter = 'all';
+    const sources = [];
+
+    for (const part of parts) {
+        if (part === '-h')  { targets.push('here'); continue; }
+        if (part === '-o')  { targets.push('own');  continue; }
+        if (part === '-gm') { filter = 'groups';    continue; }
+        if (part === '-pm') { filter = 'pm';        continue; }
+        if (part === '-g')  { filter = 'all';       continue; }
+        part.split(',').map(s => s.trim()).filter(isValidJid).forEach(j => sources.push(j));
+    }
+
+    if (!targets.length) targets.push('own');
+    return { targets, filter, sources };
+};
 
 Command({
     pattern: 'var ?(.*)',
@@ -214,11 +270,11 @@ Command({
 }, async (message, match) => {
     try {
         const current = await getCurrentHash();
-        
+
         if (!match) {
             const hasUpdate = await hasUpdates();
             if (!hasUpdate) return await message.send(lang.plugins.update.upToDate.format(current));
-            
+
             const latest = await getLatestHash();
             return await message.send(lang.plugins.update.available.format(current, latest));
         }
@@ -232,12 +288,72 @@ Command({
 
         const target = match === 'now' ? 'origin/main' : match;
         await message.send(lang.plugins.update.updatingTo.format(target));
-        
+
         await updateToCommit(target);
-        
+
         await message.send(lang.plugins.update.updated);
         process.exit(0);
     } catch (error) {
         await message.send(lang.plugins.update.failed.format(error.message));
     }
+});
+
+
+Command({
+    pattern: 'autodelete ?(.*)',
+    desc: 'Configure auto-delete forwarding',
+    type: 'owner',
+    sudo: true,
+}, async (message, match) => {
+    const arg = match?.trim() || '';
+
+    if (!arg) {
+        const cfg = settings.get(AD_NS, AD_KEY, { enabled: false });
+        const circle = cfg.enabled ? '🟢' : '🔴';
+        const targets = (cfg.targets ?? ['own'])
+            .map(t => t === 'own' ? 'own (bot DM)' : t === 'here' ? `here (${message.chat})` : t)
+            .join(', ');
+        const filter = cfg.filter ?? 'all';
+        const sources = cfg.sources?.length ? cfg.sources.join(', ') : 'all chats';
+        return message.send(
+            `${circle} Auto Delete: ${cfg.enabled ? 'ON' : 'OFF'}\n`
+            + `Forward to: ${targets}\n`
+            + `Filter: ${filter}\n`
+            + `Sources: ${sources}`
+        );
+    }
+
+    if (arg === 'help') return message.send(AD_HELP);
+    if (arg === 'on')  {
+        const cur = settings.get(AD_NS, AD_KEY, {});
+        settings.set(AD_NS, AD_KEY, { targets: ['own'], filter: 'all', sources: [], ...cur, enabled: true });
+        return message.send('🟢 Auto delete enabled.');
+    }
+    if (arg === 'off') {
+        const cur = settings.get(AD_NS, AD_KEY, {});
+        settings.set(AD_NS, AD_KEY, { ...cur, enabled: false });
+        return message.send('🔴 Auto delete disabled.');
+    }
+
+    const VALID_FLAGS = new Set(['-h', '-o', '-gm', '-pm', '-g']);
+    const parts = arg.trim().split(/\s+/);
+    const invalid = parts.filter(p => p.startsWith('-') && !VALID_FLAGS.has(p));
+    if (invalid.length) return message.send(`Invalid flag(s): ${invalid.join(', ')}\nUse \`autodelete help\` to see options.`);
+
+    const { targets, filter, sources } = parseAD(arg);
+    const cur = settings.get(AD_NS, AD_KEY, {});
+    settings.set(AD_NS, AD_KEY, { ...cur, enabled: cur.enabled ?? true, targets, filter, sources });
+
+    const targetLabels = targets.map(t =>
+        t === 'own' ? 'own (bot DM)'
+        : t === 'here' ? `here (${message.chat})`
+        : t
+    ).join(', ');
+    const srcLabel = sources.length ? sources.join(', ') : 'all chats';
+    message.send(
+        `✅ Auto delete updated\n`
+        + `Forward to: ${targetLabels}\n`
+        + `Filter: ${filter}\n`
+        + `Sources: ${srcLabel}`
+    );
 });

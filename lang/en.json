@@ -459,6 +459,25 @@
       "groupOnly": "Group only",
       "notAllowed": "Not allowed"
     },
+    "active": {
+      "desc": "View message activity stats",
+      "help": "*Active Command*\n\n{0}active — group leaderboard or DM summary\n{0}active @user — specific user stats\n{0}active @user1 @user2 — compare multiple users\n{0}active reply — reply to see that user's stats",
+      "noActivity": "No activity recorded yet.",
+      "leaderHeader": "*Group Activity Leaderboard*\n{0} members\n\n",
+      "dmHeader": "*Activity — DM*\n\n",
+      "entry": "{0}. {1} — *{2} msgs*\n{3}\nLast seen: {4}",
+      "last": "Last: {0}"
+    },
+    "inactive": {
+      "desc": "Show inactive members ranked by last message",
+      "help": "*Inactive Command*\n\n{0}inactive — list all inactive members\n{0}inactive 7 — members inactive for 7+ days\n{0}inactive 2 — members inactive for 2+ days\n\nRanked from longest inactive to most recent.",
+      "groupOnly": "This command only works in groups.",
+      "none": "No inactive members found.",
+      "noneDays": "No members inactive for {0}+ days.",
+      "header": "*Inactive Members*\n{0} members\n\n",
+      "headerDays": "*Inactive Members ({0}+ days)*\n{1} members\n\n",
+      "entry": "{0}. {1} — {2}d ago\nLast: {3}"
+    },
     "track": {
       "desc": "Track incoming raw messages with basic or advanced mode",
       "started": "Tracking {0} messages",
@@ -697,6 +716,23 @@
       "desc": "Send AI table message",
       "usage": "> `.table` <data>\n> Mix text and tables using `---` as separator\n> Text: start with `text:` or any line without `|`\n> Table: `Header1|Header2\\nRow1|Row2`\n> Flags: `-o META_AI` `-f` `-s 2`",
       "no_content": "No valid content found"
+    },
+    "allow": {
+      "desc": "Grant public access to a user",
+      "help": "*Public Access*\n\n{0}allow @user ping,tag — this chat only\n{0}allow -g @user ping,tag — global\n{0}allow @user type:general — all general commands\n{0}allow -g @user * — all commands globally\n{0}allow list — show all allow rules\n{0}allow clear — remove all allow rules\n\n{0}deny @user ping — deny specific command\n{0}deny -g @user ping,tag — deny globally\n{0}deny @user type:general — deny all general commands\n{0}deny -g @user * — deny everything globally\n{0}deny list — show all deny rules\n{0}deny clear — remove all deny rules",
+      "noUser": "Mention or reply to a user.",
+      "noCmd": "Specify commands to allow. e.g. `ping,tag` or `*`",
+      "success": "Allowed {0} to use `{1}` {2}",
+      "cleared": "All allow rules cleared.",
+      "empty": "No rules found."
+    },
+    "deny": {
+      "desc": "Deny public access from a user",
+      "noUser": "Mention or reply to a user.",
+      "noCmd": "Specify commands to deny. e.g. `ping,tag` or `*`",
+      "success": "Denied {0} from `{1}` {2}",
+      "cleared": "All deny rules cleared.",
+      "empty": "No rules found."
     }
   }
 }

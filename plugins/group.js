@@ -1,4 +1,15 @@
-import { Command, lang, config, downLoad } from '../lib/index.js';
+import { Command, lang, config, downLoad, Activity } from '../lib/index.js';
+
+const p = () => config.PREFIX || '.';
+const tag = (s) => `@${s.split('@')[0]}`;
+
+const fmt = (d) => d
+    ? d.toLocaleString('en-US', {
+        timeZone: config.TIMEZONE || 'UTC',
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true,
+    })
+    : 'Unknown';
 
 
 Command({
@@ -771,4 +782,93 @@ Command({
     if (message.quoted) return await message.send({ forward: message.quoted, mentions });
     const text = (match || '').trim();
     await message.send({ text: text || '', mentions });
+});
+
+
+Command({
+    pattern: 'active ?(.*)',
+    desc: lang.plugins.active.desc,
+    type: 'group',
+}, async (message, match, manji) => {
+    const arg = match?.trim();
+    if (arg === 'help') return message.send(lang.plugins.active.help.format(p()));
+
+    const jid = message.isGroup ? message.chat : (message.chatlid || message.chat);
+    const ac = new Activity(jid);
+
+    const targets = await manji.getUserLid(message, arg);
+    if (!targets.length && message.quoted?.lid) targets.push(message.quoted.lid);
+
+    if (targets.length) {
+        const ranked = targets.map(sender => {
+            const isBot = sender.split('@')[0] === message.botJid?.split('@')[0];
+            const { total, lines } = isBot ? ac.botStats() : ac.userStats(sender);
+            const last = !isBot ? ac.lastSeen(sender) : null;
+            return { sender, total, lines, last };
+        }).sort((a, b) => b.total - a.total);
+
+        const mentions = ranked.map(r => r.sender);
+        const text = ranked.map((r, i) =>
+            lang.plugins.active.entry.format(i + 1, tag(r.sender), r.total, r.lines, fmt(r.last))
+        ).join('\n\n');
+
+        return message.send({ text, mentions });
+    }
+
+    if (!message.isGroup) {
+        const sender = message.fromMe ? message.chatlid : (message.lid || message.chatlid);
+        const botLid = message.fromMe ? (message.lid || message.sender) : message.chatlid;
+        const { total: t1, lines: l1 } = ac.userStats(sender);
+        const { total: t2, lines: l2 } = ac.botStats();
+        const last1 = ac.lastSeen(sender);
+        const last2 = ac.botLastSeen();
+        const text = lang.plugins.active.dmHeader
+            + lang.plugins.active.entry.format('', tag(sender), t1, l1 || 'None', fmt(last1)) + '\n\n'
+            + lang.plugins.active.entry.format('', tag(botLid), t2, l2 || 'None', fmt(last2));
+        return message.send({ text, mentions: [sender, botLid] });
+    }
+
+    const board = ac.leaderboard(message.botJid);
+    if (!board.length) return message.send(lang.plugins.active.noActivity);
+
+    const mentions = board.map(r => r.sender);
+    const body = board.map((r, i) =>
+        lang.plugins.active.entry.format(i + 1, tag(r.sender), r.total, r.lines, fmt(r.lastSeen))
+    ).join('\n\n');
+
+    await message.send({
+        text: lang.plugins.active.leaderHeader.format(board.length) + body,
+        mentions,
+    });
+});
+
+
+Command({
+    pattern: 'inactive ?(.*)',
+    desc: lang.plugins.inactive.desc,
+    type: 'group',
+}, async (message, match, manji) => {
+    const arg = match?.trim();
+    if (arg === 'help') return message.send(lang.plugins.inactive.help.format(p()));
+    if (!message.isGroup) return message.send(lang.plugins.inactive.groupOnly);
+
+    const days = parseInt(arg) || 0;
+    const jid = message.chat;
+    const ac = new Activity(jid);
+    const list = ac.inactive(days);
+
+    if (!list.length) return message.send(
+        days ? lang.plugins.inactive.noneDays.format(days) : lang.plugins.inactive.none
+    );
+
+    const mentions = list.map(r => r.sender);
+    const body = list.map((r, i) =>
+        lang.plugins.inactive.entry.format(i + 1, tag(r.sender), r.days, fmt(ac.lastSeen(r.sender)))
+    ).join('\n\n');
+
+    const header = days
+        ? lang.plugins.inactive.headerDays.format(days, list.length)
+        : lang.plugins.inactive.header.format(list.length);
+
+    await message.send({ text: header + body, mentions });
 });
