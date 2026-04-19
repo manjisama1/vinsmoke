@@ -43,14 +43,9 @@ Command({
 });
 
 Command({
-    pattern: 'mode ?(.*)',
-    desc: lang.plugins.mode.desc,
-    type: 'general',
-    sudo: true,
-}, async (message, match, manji) => {
-    if (!match) return await message.send(lang.plugins.mode.current.format(config.BOT_MODE || 'private'));
-    const mode = match.toLowerCase();
-    if (mode !== 'public' && mode !== 'private') return await message.send(lang.plugins.mode.example.format(config.PREFIX));
-    await manji.envSet('BOT_MODE', mode);
-    await message.send(lang.plugins.mode.status.format(mode));
+    pattern: 'repo ?(.*)',
+    desc: 'Get bot repository link',
+    type: 'general'
+}, async (message) => {
+    await message.send(`https://github.com/manjisama1/vinsmoke`);
 });
