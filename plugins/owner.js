@@ -2,59 +2,39 @@ import { Command, downLoad, lang, config, settings, cleanupTemp, getCurrentHash,
 
 const p = () => config.PREFIX || '.';
 
-const AD_NS = 'autodelete';
-const AD_KEY = 'config';
+const isJid = (s) => s.endsWith('@g.us') || s.endsWith('@s.whatsapp.net') || s.endsWith('@lid');
 
-const AD_HELP = `*Auto Delete Help*
-
-*Destination (where to forward):*
--h = here (same chat as deleted message)
--o = own (bot's DM)
-<jid> = specific chat JID
-
-*Filter (which messages):*
--gm = groups only
--pm = private/DM only
--g = all (default)
-
-*Source filter (only from these chats):*
-Provide JIDs after filter flag, comma-separated
-
-*Examples:*
-${p()}autodelete -h
-${p()}autodelete -o
-${p()}autodelete -h -pm
-${p()}autodelete -h -gm
-${p()}autodelete -o -pm
-${p()}autodelete 120363@g.us
-${p()}autodelete -o 120363@g.us
-${p()}autodelete -h -o -gm
-${p()}autodelete -h -gm 120363@g.us,994403@s.whatsapp.net
-${p()}autodelete 120363@g.us -pm 994403@s.whatsapp.net
-${p()}autodelete on / off
-
-*Flags:* -h=here  -o=own  -gm=groups  -pm=private  -g=all`;
-
-const isValidJid = (j) =>
-    j.endsWith('@g.us') || j.endsWith('@s.whatsapp.net') || j.endsWith('@lid');
-
-const parseAD = (arg) => {
+const parseAD = (arg, mentionLid = null) => {
     const parts = arg.trim().split(/\s+/);
-    const targets = [];
-    let filter = 'all';
-    const sources = [];
+    const to = [], from = [], jidGroups = [];
+    let type = 'all', sfMode = null, sfLid = null;
 
     for (const part of parts) {
-        if (part === '-h')  { targets.push('here'); continue; }
-        if (part === '-o')  { targets.push('own');  continue; }
-        if (part === '-gm') { filter = 'groups';    continue; }
-        if (part === '-pm') { filter = 'pm';        continue; }
-        if (part === '-g')  { filter = 'all';       continue; }
-        part.split(',').map(s => s.trim()).filter(isValidJid).forEach(j => sources.push(j));
+        if (part === '-h')  { to.push('here');   continue; }
+        if (part === '-o')  { to.push('own');    continue; }
+        if (part === '-gm') { type = 'groups';   continue; }
+        if (part === '-pm') { type = 'pm';       continue; }
+        if (part === '-g')  { type = 'all';      continue; }
+        if (part === '-f')  { sfMode = 'only';   sfLid = mentionLid; continue; }
+        if (part === '-fi') { sfMode = 'ignore'; sfLid = mentionLid; continue; }
+        const jids = part.split(',').map(s => s.trim()).filter(isJid);
+        if (jids.length) jidGroups.push(jids);
     }
 
-    if (!targets.length) targets.push('own');
-    return { targets, filter, sources };
+    if (jidGroups.length === 1) to.push(...jidGroups[0]);
+    else if (jidGroups.length >= 2) { to.push(...jidGroups[0]); from.push(...jidGroups[1]); }
+    if (!to.length) to.push('own');
+
+    return { to, from, type, sf: sfMode && sfLid ? { mode: sfMode, lid: sfLid } : null };
+};
+
+const adView = (cfg) => {
+    const toLabel   = (cfg.to ?? ['own']).map(t => t === 'own' ? 'own' : t === 'here' ? 'here' : t).join(', ');
+    const fromLabel = cfg.from?.length ? cfg.from.join(', ') : 'global';
+    const sfLabel   = cfg.sf ? `${cfg.sf.mode} ${cfg.sf.lid}` : 'none';
+    return lang.plugins.autodelete.view.format(
+        cfg.on ? 'yes' : 'no', toLabel, cfg.type ?? 'all', fromLabel, sfLabel, cfg.status ? 'on' : 'off'
+    );
 };
 
 Command({
@@ -301,59 +281,34 @@ Command({
 
 Command({
     pattern: 'autodelete ?(.*)',
-    desc: 'Configure auto-delete forwarding',
+    desc: lang.plugins.autodelete.desc,
     type: 'owner',
     sudo: true,
-}, async (message, match) => {
+}, async (message, match, manji) => {
     const arg = match?.trim() || '';
+    const get = () => settings.get('autodelete', 'config', {});
+    const save = (v) => settings.set('autodelete', 'config', v);
 
-    if (!arg) {
-        const cfg = settings.get(AD_NS, AD_KEY, { enabled: false });
-        const circle = cfg.enabled ? '🟢' : '🔴';
-        const targets = (cfg.targets ?? ['own'])
-            .map(t => t === 'own' ? 'own (bot DM)' : t === 'here' ? `here (${message.chat})` : t)
-            .join(', ');
-        const filter = cfg.filter ?? 'all';
-        const sources = cfg.sources?.length ? cfg.sources.join(', ') : 'all chats';
-        return message.send(
-            `${circle} Auto Delete: ${cfg.enabled ? 'ON' : 'OFF'}\n`
-            + `Forward to: ${targets}\n`
-            + `Filter: ${filter}\n`
-            + `Sources: ${sources}`
-        );
-    }
+    if (!arg || arg === 'status') return message.send(adView(get()));
+    if (arg === 'help') return message.send(lang.plugins.autodelete.help.format(p()));
 
-    if (arg === 'help') return message.send(AD_HELP);
-    if (arg === 'on')  {
-        const cur = settings.get(AD_NS, AD_KEY, {});
-        settings.set(AD_NS, AD_KEY, { targets: ['own'], filter: 'all', sources: [], ...cur, enabled: true });
-        return message.send('🟢 Auto delete enabled.');
-    }
-    if (arg === 'off') {
-        const cur = settings.get(AD_NS, AD_KEY, {});
-        settings.set(AD_NS, AD_KEY, { ...cur, enabled: false });
-        return message.send('🔴 Auto delete disabled.');
-    }
+    if (arg === 'on')         { save({ to: ['own'], from: [], type: 'all', sf: null, ...get(), on: true });  return message.send(lang.plugins.autodelete.on); }
+    if (arg === 'off')        { save({ ...get(), on: false });     return message.send(lang.plugins.autodelete.off); }
+    if (arg === 'status on')  { save({ ...get(), status: true });  return message.send(lang.plugins.autodelete.statusOn); }
+    if (arg === 'status off') { save({ ...get(), status: false }); return message.send(lang.plugins.autodelete.statusOff); }
 
-    const VALID_FLAGS = new Set(['-h', '-o', '-gm', '-pm', '-g']);
-    const parts = arg.trim().split(/\s+/);
-    const invalid = parts.filter(p => p.startsWith('-') && !VALID_FLAGS.has(p));
-    if (invalid.length) return message.send(`Invalid flag(s): ${invalid.join(', ')}\nUse \`autodelete help\` to see options.`);
+    const VALID = new Set(['-h', '-o', '-gm', '-pm', '-g', '-f', '-fi']);
+    const invalid = arg.split(/\s+/).filter(s => s.startsWith('-') && !VALID.has(s));
+    if (invalid.length) return message.send(lang.plugins.autodelete.invalidFlags.format(invalid.join(', '), p()));
 
-    const { targets, filter, sources } = parseAD(arg);
-    const cur = settings.get(AD_NS, AD_KEY, {});
-    settings.set(AD_NS, AD_KEY, { ...cur, enabled: cur.enabled ?? true, targets, filter, sources });
+    const mentionLid = (await manji.getUserLid(message, arg))[0] ?? null;
+    const { to, from, type, sf } = parseAD(arg, mentionLid);
+    save({ ...get(), on: get().on ?? true, to, from, type, sf });
 
-    const targetLabels = targets.map(t =>
-        t === 'own' ? 'own (bot DM)'
-        : t === 'here' ? `here (${message.chat})`
-        : t
-    ).join(', ');
-    const srcLabel = sources.length ? sources.join(', ') : 'all chats';
-    message.send(
-        `✅ Auto delete updated\n`
-        + `Forward to: ${targetLabels}\n`
-        + `Filter: ${filter}\n`
-        + `Sources: ${srcLabel}`
-    );
+    const toLabel   = to.map(t => t === 'own' ? 'own' : t === 'here' ? 'here' : t).join(', ');
+    const fromLabel = from.length ? from.join(', ') : 'global';
+    const reply = sf
+        ? lang.plugins.autodelete.updatedSender.format(toLabel, type, fromLabel, `${sf.mode} ${sf.lid}`)
+        : lang.plugins.autodelete.updated.format(toLabel, type, fromLabel);
+    message.send(reply);
 });

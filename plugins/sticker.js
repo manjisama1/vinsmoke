@@ -21,11 +21,11 @@ Command({
     desc: lang.plugins.sticker.desc,
     type: 'sticker',
 }, async (message) => {
-    const stickerBuffer = await sticker(message.raw);
+    if (!message.hasMedia && !message.quoted?.hasMedia)
+        return message.send(lang.plugins.sticker.reply_required);
 
-    if (!stickerBuffer) {
-        return await message.send(lang.plugins.sticker.reply_required);
-    }
+    const stickerBuffer = await sticker(message.raw);
+    if (!stickerBuffer) return message.send(lang.plugins.sticker.reply_required);
 
     await message.send({ sticker: stickerBuffer });
 });
@@ -37,22 +37,14 @@ Command({
     desc: lang.plugins.steal.desc,
     type: 'sticker',
 }, async (message, match) => {
-    let pack, author;
+    if (!message.sticker && !message.quoted?.sticker)
+        return message.send(lang.plugins.steal.reply_required);
 
-    if (!match || match.trim() === '') {
-        pack = undefined;
-        author = undefined;
-    } else {
-        const parts = match.split(',').map(x => x?.trim() || undefined);
-        pack = parts[0];
-        author = parts[1];
-    }
+    const parts = match?.trim().split(',').map(x => x?.trim() || undefined) || [];
+    const [pack, author] = parts;
 
     const stickerBuffer = await sticker(message.raw, pack, author);
-
-    if (!stickerBuffer) {
-        return await message.send(lang.plugins.steal.reply_required);
-    }
+    if (!stickerBuffer) return message.send(lang.plugins.steal.reply_required);
 
     await message.send({ sticker: stickerBuffer });
 });

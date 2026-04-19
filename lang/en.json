@@ -717,22 +717,35 @@
       "usage": "> `.table` <data>\n> Mix text and tables using `---` as separator\n> Text: start with `text:` or any line without `|`\n> Table: `Header1|Header2\\nRow1|Row2`\n> Flags: `-o META_AI` `-f` `-s 2`",
       "no_content": "No valid content found"
     },
+    "autodelete": {
+      "desc": "Configure auto-delete message forwarding",
+      "help": "*Auto Delete*\n\n*Destination — where to forward:*\n> -h = here (same chat)\n> -o = own (bot DM)\n> <jid> = specific chat\n\n*Source — which chats to listen from:*\n> <jid> = specific chat (2nd positional arg)\n> <jid,jid> = multiple chats\n> empty = all chats\n\n*Type filter:*\n> -gm = groups only\n> -pm = DMs only\n> -g = all (default)\n\n*Sender filter:*\n> -f @user = only from this person\n> -fi @user = ignore this person\n\n*Positional JID rules:*\n> one JID = destination\n> two JIDs = 1st to, 2nd from\n> jid,jid jid,jid = multiple to, multiple from\n\n*Controls:*\n> {0}autodelete on — enable\n> {0}autodelete off — disable\n> {0}autodelete status — show current config\n> {0}autodelete status on — include status messages\n> {0}autodelete status off — exclude status messages\n\n*Examples:*\n> {0}autodelete -h\n> {0}autodelete -o -gm\n> {0}autodelete 994403@s.whatsapp.net\n> {0}autodelete 994403@s.whatsapp.net 120363@g.us\n> {0}autodelete -h -f @user\n> {0}autodelete -o -fi @user -gm",
+      "view": "*Auto Delete*\n> Active: {0}\n> To: {1}\n> Filter: {2}\n> From: {3}\n> Sender: {4}\n> Status msgs: {5}",
+      "updated": "*Updated*\n> To: {0}\n> Filter: {1}\n> From: {2}",
+      "updatedSender": "*Updated*\n> To: {0}\n> Filter: {1}\n> From: {2}\n> Sender: {3}",
+      "on": "*Updated*\n> Active: yes",
+      "off": "*Updated*\n> Active: no",
+      "statusOn": "*Updated*\n> Status msgs: on",
+      "statusOff": "*Updated*\n> Status msgs: off",
+      "invalidFlags": "Invalid flag(s): {0}\nSee {1}autodelete help"
+    },
     "allow": {
       "desc": "Grant public access to a user",
-      "help": "*Public Access*\n\n{0}allow @user ping,tag — this chat only\n{0}allow -g @user ping,tag — global\n{0}allow @user type:general — all general commands\n{0}allow -g @user * — all commands globally\n{0}allow list — show all allow rules\n{0}allow clear — remove all allow rules\n\n{0}deny @user ping — deny specific command\n{0}deny -g @user ping,tag — deny globally\n{0}deny @user type:general — deny all general commands\n{0}deny -g @user * — deny everything globally\n{0}deny list — show all deny rules\n{0}deny clear — remove all deny rules",
-      "noUser": "Mention or reply to a user.",
-      "noCmd": "Specify commands to allow. e.g. `ping,tag` or `*`",
+      "usage": "*Usage:*\n> {0}allow @user ping,tag — this chat only\n> {0}allow -g @user ping,tag — global (any chat)\n> {0}allow -h — allow this entire chat (everyone)\n> {0}allow -g -h — allow this chat globally\n> {0}allow @user type:general — all general commands\n> {0}allow -g @user * — all commands globally\n> {0}allow list — show all allow rules\n> {0}allow clear — remove all allow rules\n\n-h = here (this chat)  -g = global",
+      "noTarget": "Define a target. Use @user, -h (this chat), or see {0}allow help.",
+      "noCmd": "Specify commands. e.g. `ping,tag` or `*`",
       "success": "Allowed {0} to use `{1}` {2}",
       "cleared": "All allow rules cleared.",
-      "empty": "No rules found."
+      "empty": "No allow rules found."
     },
     "deny": {
       "desc": "Deny public access from a user",
-      "noUser": "Mention or reply to a user.",
-      "noCmd": "Specify commands to deny. e.g. `ping,tag` or `*`",
+      "usage": "*Usage:*\n> {0}deny @user ping,tag — this chat only\n> {0}deny -g @user ping,tag — global (any chat)\n> {0}deny -h — deny this entire chat (everyone)\n> {0}deny -g -h — deny this chat globally\n> {0}deny @user type:general — all general commands\n> {0}deny -g @user * — deny everything globally\n> {0}deny list — show all deny rules\n> {0}deny clear — remove all deny rules\n\n-h = here (this chat)  -g = global",
+      "noTarget": "Define a target. Use @user, -h (this chat), or see {0}deny help.",
+      "noCmd": "Specify commands. e.g. `ping,tag` or `*`",
       "success": "Denied {0} from `{1}` {2}",
       "cleared": "All deny rules cleared.",
-      "empty": "No rules found."
+      "empty": "No deny rules found."
     }
   }
 }
