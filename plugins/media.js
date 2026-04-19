@@ -34,35 +34,36 @@ Command({
     desc: lang.plugins.spotify.desc,
     type: 'download',
 }, async (message, match) => {
-    const url =
-        match?.trim() ||
-        message.quoted?.text?.match(/https?:\/\/open\.spotify\.com\/track\/[a-zA-Z0-9]+/)?.[0];
+    const url = match?.trim() || message.quoted?.text?.match(/https?:\/\/open\.spotify\.com\/track\/[a-zA-Z0-9]+/)?.[0];
 
     if (!url) return message.send(lang.plugins.spotify.usage);
-    if (!/https?:\/\/open\.spotify\.com\/track\/[a-zA-Z0-9]+/.test(url))
-        return message.send(lang.plugins.spotify.invalid_url);
+    if (!/https?:\/\/open\.spotify\.com\/track\/[a-zA-Z0-9]+/.test(url)) return message.send(lang.plugins.spotify.invalid_url);
 
     const downloading = await message.send(lang.plugins.spotify.downloading);
 
     try {
         const song = await spotifyDl(url);
-        if (!song?.url) throw new Error('No download URL');
+        if (!song?.status || !song?.link) throw new Error('Failed to scrape track');
 
-        const audio = Buffer.from(
-            (await axios.get(song.url, { responseType: 'arraybuffer', timeout: 60000 })).data
-        );
+        const [audioBuffer, thumbBuffer] = await Promise.all([
+            axios.get(song.link, { responseType: 'arraybuffer', timeout: 60000 }).then(res => res.data),
+            axios.get(song.thumbnail, { responseType: 'arraybuffer' }).then(res => res.data).catch(() => null)
+        ]);
 
         await message.send({
-            audio,
+            audio: Buffer.from(audioBuffer),
             mimetype: 'audio/mpeg',
             fileName: `${song.title} - ${song.artist}.mp3`,
-            caption: `${song.title}\n${song.artist}`,
             contextInfo: {
                 externalAdReply: {
-                    title: song.title,
-                    body: song.artist,
-                },
-            },
+                    title: `🎵 ${song.title}`,
+                    body: `${song.artist} | ${song.duration}`,
+                    mediaType: 2,
+                    thumbnail: thumbBuffer,
+                    sourceUrl: url,
+                    renderLargerThumbnail: false
+                }
+            }
         });
     } catch (err) {
         console.error('Spotify error:', err);
