@@ -717,9 +717,9 @@
       "usage": "> `.table` <data>\n> Mix text and tables using `---` as separator\n> Text: start with `text:` or any line without `|`\n> Table: `Header1|Header2\\nRow1|Row2`\n> Flags: `-o META_AI` `-f` `-s 2`",
       "no_content": "No valid content found"
     },
-    "autodelete": {
+    "antidelete": {
       "desc": "Configure auto-delete message forwarding",
-      "help": "*Auto Delete*\n\n*Destination — where to forward:*\n> -h = here (same chat)\n> -o = own (bot DM)\n> <jid> = specific chat\n\n*Source — which chats to listen from:*\n> <jid> = specific chat (2nd positional arg)\n> <jid,jid> = multiple chats\n> empty = all chats\n\n*Type filter:*\n> -gm = groups only\n> -pm = DMs only\n> -g = all (default)\n\n*Sender filter:*\n> -f @user = only from this person\n> -fi @user = ignore this person\n\n*Positional JID rules:*\n> one JID = destination\n> two JIDs = 1st to, 2nd from\n> jid,jid jid,jid = multiple to, multiple from\n\n*Controls:*\n> {0}autodelete on — enable\n> {0}autodelete off — disable\n> {0}autodelete status — show current config\n> {0}autodelete status on — include status messages\n> {0}autodelete status off — exclude status messages\n\n*Examples:*\n> {0}autodelete -h\n> {0}autodelete -o -gm\n> {0}autodelete 994403@s.whatsapp.net\n> {0}autodelete 994403@s.whatsapp.net 120363@g.us\n> {0}autodelete -h -f @user\n> {0}autodelete -o -fi @user -gm",
+      "help": "*Anti Delete*\n\n*Flag order: [to] [from] [type] [sender]*\n\n*1. Destination (to) — where to forward:*\n> -h = here (this chat, where command is run)\n> -o = own (bot DM)\n> jid = specific chat\n> jid1,jid2 = multiple destinations\n\n*2. Source (from) — which chats to watch:*\n> jid = specific chat (2nd positional token)\n> jid1,jid2 = multiple sources\n> empty = all chats\n\n*3. Type filter:*\n> -gm = groups only\n> -pm = DMs only\n> -g = all (default)\n\n*4. Sender filter (last):*\n> -f @user = only from this person\n> -fi @user = ignore this person\n> -f @u1 @u2 = multiple users\n\n*Examples:*\n> {0}antidelete -h\n> {0}antidelete -o -gm\n> {0}antidelete jid1,jid2\n> {0}antidelete jid1 jid2,jid3\n> {0}antidelete -h -gm -f @user\n> {0}antidelete on / off",
       "view": "*Auto Delete*\n> Active: {0}\n> To: {1}\n> Filter: {2}\n> From: {3}\n> Sender: {4}\n> Status msgs: {5}",
       "updated": "*Updated*\n> To: {0}\n> Filter: {1}\n> From: {2}",
       "updatedSender": "*Updated*\n> To: {0}\n> Filter: {1}\n> From: {2}\n> Sender: {3}",
@@ -727,7 +727,7 @@
       "off": "*Updated*\n> Active: no",
       "statusOn": "*Updated*\n> Status msgs: on",
       "statusOff": "*Updated*\n> Status msgs: off",
-      "invalidFlags": "Invalid flag(s): {0}\nSee {1}autodelete help"
+      "invalidFlags": "Invalid flag(s): {0}\nSee {1}antidelete help"
     },
     "allow": {
       "desc": "Grant public access to a user",

@@ -4,10 +4,11 @@ const p = () => config.PREFIX || '.';
 
 const isJid = (s) => s.endsWith('@g.us') || s.endsWith('@s.whatsapp.net') || s.endsWith('@lid');
 
-const parseAD = (arg, mentionLid = null) => {
+const parseAD = (arg, mentionLids = []) => {
     const parts = arg.trim().split(/\s+/);
-    const to = [], from = [], jidGroups = [];
-    let type = 'all', sfMode = null, sfLid = null;
+    let to = [], from = [];
+    let type = null, sfMode = null, sfLids = [];
+    const jidGroups = [];
 
     for (const part of parts) {
         if (part === '-h')  { to.push('here');   continue; }
@@ -15,24 +16,25 @@ const parseAD = (arg, mentionLid = null) => {
         if (part === '-gm') { type = 'groups';   continue; }
         if (part === '-pm') { type = 'pm';       continue; }
         if (part === '-g')  { type = 'all';      continue; }
-        if (part === '-f')  { sfMode = 'only';   sfLid = mentionLid; continue; }
-        if (part === '-fi') { sfMode = 'ignore'; sfLid = mentionLid; continue; }
+        if (part === '-f')  { sfMode = 'only';   sfLids = mentionLids; continue; }
+        if (part === '-fi') { sfMode = 'ignore'; sfLids = mentionLids; continue; }
         const jids = part.split(',').map(s => s.trim()).filter(isJid);
         if (jids.length) jidGroups.push(jids);
     }
 
     if (jidGroups.length === 1) to.push(...jidGroups[0]);
     else if (jidGroups.length >= 2) { to.push(...jidGroups[0]); from.push(...jidGroups[1]); }
-    if (!to.length) to.push('own');
 
-    return { to, from, type, sf: sfMode && sfLid ? { mode: sfMode, lid: sfLid } : null };
+    if (!to.length) to = null;
+    const sf = sfMode && sfLids.length ? { mode: sfMode, lids: sfLids } : null;
+    return { to, from: from.length ? from : null, type, sf };
 };
 
 const adView = (cfg) => {
     const toLabel   = (cfg.to ?? ['own']).map(t => t === 'own' ? 'own' : t === 'here' ? 'here' : t).join(', ');
     const fromLabel = cfg.from?.length ? cfg.from.join(', ') : 'global';
-    const sfLabel   = cfg.sf ? `${cfg.sf.mode} ${cfg.sf.lid}` : 'none';
-    return lang.plugins.autodelete.view.format(
+    const sfLabel   = cfg.sf ? `${cfg.sf.mode} ${(cfg.sf.lids ?? [cfg.sf.lid]).join(', ')}` : 'none';
+    return lang.plugins.antidelete.view.format(
         cfg.on ? 'yes' : 'no', toLabel, cfg.type ?? 'all', fromLabel, sfLabel, cfg.status ? 'on' : 'off'
     );
 };
@@ -292,35 +294,52 @@ Command({
 
 
 Command({
-    pattern: 'autodelete ?(.*)',
-    desc: lang.plugins.autodelete.desc,
+    pattern: 'antidelete ?(.*)',
+    desc: lang.plugins.antidelete.desc,
     type: 'owner',
     sudo: true,
 }, async (message, match, manji) => {
     const arg = match?.trim() || '';
-    const get = () => settings.get('autodelete', 'config', {});
-    const save = (v) => settings.set('autodelete', 'config', v);
+    const get = () => settings.get('antidelete', 'config', {});
+    const save = (v) => settings.set('antidelete', 'config', v);
 
     if (!arg || arg === 'status') return message.send(adView(get()));
-    if (arg === 'help') return message.send(lang.plugins.autodelete.help.format(p()));
+    if (arg === 'help') return message.send(lang.plugins.antidelete.help.format(p()));
 
-    if (arg === 'on')         { save({ to: ['own'], from: [], type: 'all', sf: null, ...get(), on: true });  return message.send(lang.plugins.autodelete.on); }
-    if (arg === 'off')        { save({ ...get(), on: false });     return message.send(lang.plugins.autodelete.off); }
-    if (arg === 'status on')  { save({ ...get(), status: true });  return message.send(lang.plugins.autodelete.statusOn); }
-    if (arg === 'status off') { save({ ...get(), status: false }); return message.send(lang.plugins.autodelete.statusOff); }
+    if (arg === 'on')         { save({ to: ['own'], from: [], type: 'all', sf: null, ...get(), on: true });  return message.send(lang.plugins.antidelete.on); }
+    if (arg === 'off')        { save({ ...get(), on: false });     return message.send(lang.plugins.antidelete.off); }
+    if (arg === 'status on')  { save({ ...get(), status: true });  return message.send(lang.plugins.antidelete.statusOn); }
+    if (arg === 'status off') { save({ ...get(), status: false }); return message.send(lang.plugins.antidelete.statusOff); }
 
     const VALID = new Set(['-h', '-o', '-gm', '-pm', '-g', '-f', '-fi']);
     const invalid = arg.split(/\s+/).filter(s => s.startsWith('-') && !VALID.has(s));
-    if (invalid.length) return message.send(lang.plugins.autodelete.invalidFlags.format(invalid.join(', '), p()));
+    if (invalid.length) return message.send(lang.plugins.antidelete.invalidFlags.format(invalid.join(', '), p()));
 
-    const mentionLid = (await manji.getUserLid(message, arg))[0] ?? null;
-    const { to, from, type, sf } = parseAD(arg, mentionLid);
-    save({ ...get(), on: get().on ?? true, to, from, type, sf });
+    const mentionLids = await manji.getUserLid(message, arg);
+    const { to, from, type, sf } = parseAD(arg, mentionLids);
+    const cur = get();
 
-    const toLabel   = to.map(t => t === 'own' ? 'own' : t === 'here' ? 'here' : t).join(', ');
-    const fromLabel = from.length ? from.join(', ') : 'global';
-    const reply = sf
-        ? lang.plugins.autodelete.updatedSender.format(toLabel, type, fromLabel, `${sf.mode} ${sf.lid}`)
-        : lang.plugins.autodelete.updated.format(toLabel, type, fromLabel);
+    const resolvedTo = to
+        ? to.map(t => t === 'here' ? message.chat : t)
+        : cur.to ?? ['own'];
+
+    const next = {
+        ...cur,
+        on: cur.on ?? true,
+        to: resolvedTo,
+        ...(from !== null && { from }),
+        ...(type !== null && { type }),
+        ...(sf !== null && { sf }),
+    };
+
+    if (sf && cur.sf && sf.mode !== cur.sf.mode) next.sf = sf;
+
+    save(next);
+
+    const toLabel   = resolvedTo.map(t => t === 'own' ? 'own' : t).join(', ');
+    const fromLabel = (next.from ?? []).length ? next.from.join(', ') : 'global';
+    const reply = next.sf
+        ? lang.plugins.antidelete.updatedSender.format(toLabel, next.type ?? 'all', fromLabel, `${next.sf.mode} ${(next.sf.lids ?? [next.sf.lid]).join(', ')}`)
+        : lang.plugins.antidelete.updated.format(toLabel, next.type ?? 'all', fromLabel);
     message.send(reply);
 });
