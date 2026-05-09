@@ -747,6 +747,16 @@
       "success": "Denied {0} from `{1}` {2}",
       "cleared": "All deny rules cleared.",
       "empty": "No deny rules found."
+    },
+    "yt": {
+      "desc": "YouTube downloader and search",
+      "usage": ".yt -v <link>    video\n.yt -a <link>    audio\n.yt -s <query>   search\n.yt -d <link>    details",
+      "downloading_audio": "Downloading audio...",
+      "downloading_video": "Downloading video...",
+      "no_results": "No results found.",
+      "unknown_flag": "Unknown flag. Use -v, -a, -s or -d.",
+      "failed": "Failed: {0}",
+      "details": "*{0}*\n\nChannel  : {1}\nDuration : {2}\nViews    : {3}\nLikes    : {4}\n\n{5}"
     }
   }
 }

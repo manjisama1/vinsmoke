@@ -197,14 +197,10 @@ await message.forward('targetchat@g.us');
 
 ## Media Download
 ```javascript
-// Download media as buffer
-const buffer = await message.download();
-
-// Download quoted media
-const quotedBuffer = await message.quoted.download();
-
-// Download to file
-const filePath = await message.download('path');
+// Download a file
+import { downLoad } from '../lib/index.js';
+const filePath = await downLoad(message.raw, 'path') || await downLoad(message.quoted, 'path');
+// This returns the file path
 ```
 
 ## Group Management (via manji)
