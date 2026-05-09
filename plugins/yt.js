@@ -16,7 +16,6 @@ Command({
     pattern: 'yt ?(.*)',
     desc: lang.plugins.yt.desc,
     type: 'download',
-    react: false,
 }, async (message, match) => {
     const args  = match?.trim().split(/\s+/) ?? [];
     const flag  = args[0]?.toLowerCase();
