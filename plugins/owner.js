@@ -44,58 +44,69 @@ Command({
     desc: lang.plugins.var.desc,
     type: 'owner',
     sudo: true,
-}, async (msg, match, manji) => {
-    const prefix = config.PREFIX || '.';
-    const args = match?.trim()?.split(' ') || [];
-    const action = args[0]?.toLowerCase();
-    if (!action) return await msg.send(lang.plugins.var.usage.format(prefix));
-
+}, async (msg, match) => {
+    const px   = config.PREFIX || '.';
+    const args = match?.trim().split(' ') ?? [];
+    const act  = args[0]?.toLowerCase();
     const input = args.slice(1).join(' ');
-    const isMutation = ['set', 'add', 'edit'].includes(action);
 
-    if (isMutation) {
-        let key, val;
-        if (msg.quoted) {
-            key = input.trim().toUpperCase();
-            val = msg.quoted.text;
-        } else {
-            if (!input.includes('=')) return await msg.send(lang.plugins.var[action].usage.format(prefix));
-            const parts = input.split('=');
-            key = parts[0].trim().toUpperCase();
-            val = parts.slice(1).join('=').trim();
-        }
+    if (!act) return msg.send(lang.plugins.var.usage.format(px));
 
-        if (!key) return await msg.send(lang.plugins.var.set.failed.emptyKey);
+    if (act === 'help') return msg.send(lang.plugins.var.help.format(px));
 
-        const current = manji.envAll();
-        if (action === 'edit' && !current[key]) return await msg.send(lang.plugins.var.edit.notFound.format(key));
-
-        const success = action === 'add' ? manji.envAdd(key, val) : manji.envSet(key, val);
-        return await msg.send(success ? lang.plugins.var[action].success.format(key, val) : lang.plugins.var.set.failed.generic);
+    if (act === 'all') {
+        const text = config.display(config.getAll(), { mask: !msg.isSudo });
+        return msg.send(text || lang.plugins.var.all.empty);
     }
 
-    switch (action) {
-        case 'all':
-            const all = manji.envAll();
-            return await msg.send(manji.envDisplay(all, { maskSensitive: !msg.isSudo }) || lang.plugins.var.all.empty);
-
-        case 'del':
-            const delKey = args[1]?.toUpperCase();
-            if (!delKey) return await msg.send(lang.plugins.var.del.usage.format(prefix));
-            return await msg.send(manji.envDelete(delKey) ? lang.plugins.var.del.success.format(delKey) : lang.plugins.var.set.failed.generic);
-
-        case 'see':
-            const seeKey = args[1]?.toUpperCase();
-            if (!seeKey) return await msg.send(lang.plugins.var.see.usage.format(prefix));
-            const vars = manji.envAll();
-            return await msg.send(vars[seeKey] ? lang.plugins.var.see.value.format(seeKey, vars[seeKey]) : lang.plugins.var.see.notFound.format(seeKey));
-
-        case 'help':
-            return await msg.send(lang.plugins.var.help.format(prefix));
-
-        default:
-            return await msg.send(lang.plugins.var.unknown.format(action));
+    if (act === 'del') {
+        const key = args[1]?.toUpperCase();
+        if (!key) return msg.send(lang.plugins.var.del.usage.format(px));
+        return msg.send(
+            config.deleteEnv(key)
+                ? lang.plugins.var.del.success.format(key)
+                : lang.plugins.var.set.failed.generic
+        );
     }
+
+    if (act === 'see') {
+        const key  = args[1]?.toUpperCase();
+        if (!key) return msg.send(lang.plugins.var.see.usage.format(px));
+        const val  = config.getAll()[key];
+        return msg.send(
+            val
+                ? lang.plugins.var.see.value.format(key, val)
+                : lang.plugins.var.see.notFound.format(key)
+        );
+    }
+
+    const isMut = act === 'set' || act === 'add' || act === 'edit';
+    if (!isMut) return msg.send(lang.plugins.var.unknown.format(act));
+
+    let key, val;
+    if (msg.quoted) {
+        key = input.trim().toUpperCase();
+        val = msg.quoted.text;
+    } else {
+        if (!input.includes('=')) return msg.send(lang.plugins.var[act].usage.format(px));
+        const parts = input.split('=');
+        key = parts[0].trim().toUpperCase();
+        val = parts.slice(1).join('=').trim();
+    }
+
+    if (!key) return msg.send(lang.plugins.var.set.failed.emptyKey);
+    if (act === 'edit' && !config.getAll()[key])
+        return msg.send(lang.plugins.var.edit.notFound.format(key));
+
+    const ok = act === 'add'
+        ? config.addToEnv(key, val)
+        : config.updateEnv(key, val);
+
+    return msg.send(
+        ok
+            ? lang.plugins.var[act].success.format(key, val)
+            : lang.plugins.var.set.failed.generic
+    );
 });
 
 Command({
@@ -103,49 +114,46 @@ Command({
     desc: lang.plugins.mode.desc,
     type: 'general',
     sudo: true,
-}, async (message, match, manji) => {
-    if (!match) return await message.send(lang.plugins.mode.current.format(config.BOT_MODE || 'private'));
-    const mode = match.toLowerCase();
-    if (mode !== 'public' && mode !== 'private') return await message.send(lang.plugins.mode.example.format(config.PREFIX));
-    await manji.envSet('BOT_MODE', mode);
-    await message.send(lang.plugins.mode.status.format(mode));
+}, async (msg, match) => {
+    if (!match) return msg.send(lang.plugins.mode.current.format(config.BOT_MODE || 'private'));
+    const mode = match.trim().toLowerCase();
+    if (mode !== 'public' && mode !== 'private')
+        return msg.send(lang.plugins.mode.example.format(config.PREFIX));
+    config.updateEnv('BOT_MODE', mode);
+    return msg.send(lang.plugins.mode.status.format(mode));
 });
 
 Command({
     pattern: 'setsudo ?(.*)',
     desc: lang.plugins.setsudo.desc,
     type: 'owner',
-    owner: true
-}, async (message, _, manji) => {
+    owner: true,
+}, async (msg) => {
     const targets = [
-        ...message.mention,
-        message.quoted?.lid,
-        !message.isGroup ? message.key.remoteJid : null
+        ...msg.mention,
+        msg.quoted?.lid,
+        !msg.isGroup ? msg.key.remoteJid : null,
     ].filter(Boolean);
 
-    if (!targets.length) return await message.send(lang.plugins.setsudo.provide);
+    if (!targets.length) return msg.send(lang.plugins.setsudo.provide);
 
-    const current = manji.envList('SUDO');
-    const added = [];
-    const exists = [];
+    const current = config.getEnvList('SUDO');
+    const added   = [];
+    const exists  = [];
 
     [...new Set(targets)].forEach(t => {
         const id = t.split(/[:@]/)[0];
         current.includes(id)
-        ? exists.push(id)
-        : manji.envAdd('SUDO', id) && added.push(id);
+            ? exists.push(id)
+            : config.addToEnv('SUDO', id) && added.push(id);
     });
 
     const response = [
-        added.length && lang.plugins.setsudo.added.format(added.map(v => `@${v}`).join(', ')),
-        exists.length && lang.plugins.setsudo.exists.format(exists.map(v => `@${v}`).join(', '))
-    ]
-        .filter(Boolean)
-        .join('\n');
+        added.length  && lang.plugins.setsudo.added.format(added.map(v => `@${v}`).join(', ')),
+        exists.length && lang.plugins.setsudo.exists.format(exists.map(v => `@${v}`).join(', ')),
+    ].filter(Boolean).join('\n');
 
-    await message.send(response, {
-        mentions: targets
-    });
+    return msg.send(response, { mentions: targets });
 });
 
 
@@ -153,36 +161,32 @@ Command({
     pattern: 'delsudo ?(.*)',
     desc: lang.plugins.delsudo.desc,
     type: 'owner',
-    owner: true
-}, async (message, _, manji) => {
+    owner: true,
+}, async (msg) => {
     const targets = [
-        ...message.mention,
-        message.quoted?.lid,
-        !message.isGroup ? message.key.remoteJid : null
+        ...msg.mention,
+        msg.quoted?.lid,
+        !msg.isGroup ? msg.key.remoteJid : null,
     ].filter(Boolean);
 
-    if (!targets.length) return await message.send(lang.plugins.delsudo.provide);
+    if (!targets.length) return msg.send(lang.plugins.delsudo.provide);
 
-    const removed = [];
+    const removed  = [];
     const notFound = [];
 
     [...new Set(targets)].forEach(t => {
         const id = t.split(/[:@]/)[0];
-        manji.envRemove('SUDO', id)
-        ? removed.push(id)
-        : notFound.push(id);
+        config.removeFromEnv('SUDO', id)
+            ? removed.push(id)
+            : notFound.push(id);
     });
 
     const response = [
-        removed.length && lang.plugins.delsudo.removed.format(removed.map(v => `@${v}`).join(', ')),
-        notFound.length && lang.plugins.delsudo.not_found.format(notFound.map(v => `@${v}`).join(', '))
-    ]
-        .filter(Boolean)
-        .join('\n');
+        removed.length  && lang.plugins.delsudo.removed.format(removed.map(v => `@${v}`).join(', ')),
+        notFound.length && lang.plugins.delsudo.not_found.format(notFound.map(v => `@${v}`).join(', ')),
+    ].filter(Boolean).join('\n');
 
-    await message.send(response, {
-        mentions: targets
-    });
+    return msg.send(response, { mentions: targets });
 });
 
 
@@ -207,8 +211,8 @@ Command({
 }, async (message, match, manji) => {
     const bio = match?.trim();
     if (!bio) return message.send(lang.plugins.userbio.noBio);
-    await manji.userBio(bio);
-    await message.send(lang.plugins.userbio.updated.format(bio));
+    const success = await manji.userBio(bio);
+    if (success) await message.send(lang.plugins.userbio.updated.format(bio));
 });
 
 
@@ -303,13 +307,14 @@ Command({
     const get = () => settings.get('antidelete', 'config', {});
     const save = (v) => settings.set('antidelete', 'config', v);
 
-    if (!arg || arg === 'status') return message.send(adView(get()));
+    if (!arg) return message.send(adView(get()));
     if (arg === 'help') return message.send(lang.plugins.antidelete.help.format(p()));
 
     if (arg === 'on')         { save({ to: ['own'], from: [], type: 'all', sf: null, ...get(), on: true });  return message.send(lang.plugins.antidelete.on); }
     if (arg === 'off')        { save({ ...get(), on: false });     return message.send(lang.plugins.antidelete.off); }
     if (arg === 'status on')  { save({ ...get(), status: true });  return message.send(lang.plugins.antidelete.statusOn); }
     if (arg === 'status off') { save({ ...get(), status: false }); return message.send(lang.plugins.antidelete.statusOff); }
+    if (arg === 'status')     return message.send(lang.plugins.antidelete.statusUsage.format(p()));
 
     const VALID = new Set(['-h', '-o', '-gm', '-pm', '-g', '-f', '-fi']);
     const invalid = arg.split(/\s+/).filter(s => s.startsWith('-') && !VALID.has(s));
