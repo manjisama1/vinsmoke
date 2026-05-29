@@ -1,8 +1,6 @@
 import { Command, Youtube, config, tempDir, lang } from '../lib/index.js';
 import fs from 'fs/promises';
 
-const yt = new Youtube(config.YT_COOKIE);
-
 const fmtSearch = r => r.map((v, i) => 
     `*${i + 1}.* ${v.title}\n${v.channel} | ${v.duration} | ${v.views}\n${v.url}`
 ).join('\n\n');
@@ -20,6 +18,8 @@ Command({
     const query = queryArgs.join(' ');
 
     if (!flag || !query) return message.send(lang.plugins.yt.usage);
+    
+    const yt = new Youtube(config.YT_COOKIE);
 
     if (flag === '-s') {
         const res = await yt.search(query, 10).catch(() => null);
@@ -65,7 +65,7 @@ Command({
 }, async (message, match) => {
     const query = match?.trim();
     if (!query) return message.send(lang.plugins.play.usage.format(config.PREFIX));
-
+    const yt = new Youtube(config.YT_COOKIE);
     const status = await message.send(lang.plugins.play.searching.format(query));
     const search = await yt.search(query, 1).catch(() => null);
 
