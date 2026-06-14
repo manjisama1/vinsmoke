@@ -45,27 +45,25 @@ Command({
 });
 
 Command({
-  pattern: 'pfp ?(.*)',
-  desc: 'Fetch user profile picture',
-  type: 'tools',
+    pattern: 'pfp ?(.*)',
+    desc: 'Fetch user profile picture',
+    type: 'tools',
 }, async (message, match, manji) => {
-  const target = match || message.mentionedJid?.[0] || message.quoted?.sender || '';
-  
-  if (!target) return message.send('Provide a number or JID');
+    const input = match || message.quoted?.text || '';
+    if (!input) return message.send('Provide a number or JID');
 
-  const jid = target.includes('@') 
-    ? target.trim()
-    : target.replace(/[\s()+-]/g, '')
-      ? `${target.replace(/[\s()+-]/g, '')}@s.whatsapp.net`
-      : null;
+    const clean = input.replace(/[^0-9]/g, '');
+    const jid = input.includes('@s.whatsapp.net') ? input 
+        : clean ? `${clean}@s.whatsapp.net` 
+        : null;
 
-  if (!jid || typeof jid !== 'string') return message.send('Invalid number or JID');
+    if (!jid) return message.send('Invalid number or JID');
 
-  const url = await manji.fetchProfilePic(jid, 'high');
+    const url = await manji.fetchProfilePic(jid, 'high');
 
-  return url === 'https://i.imgur.com/dmxYQ8h.png'
-    ? message.send('_No profile picture found_')
-    : message.send({ image: { url } });
+    return url === 'https://i.imgur.com/dmxYQ8h.png'
+        ? message.send('_No profile picture found_')
+        : message.send({ image: { url } });
 });
 
 Command({
