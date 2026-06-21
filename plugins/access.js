@@ -5,13 +5,17 @@ const p = () => config.PREFIX || '.';
 const parseArg = (arg) => {
     const isGlobal = arg.includes('-g');
     const isHere   = arg.includes('-h');
-    const rest     = arg.replace(/-g|-h/g, '').trim();
-    return { isGlobal, isHere, rest };
+    const clean    = arg.replace(/-g|-h/g, '').trim();
+    return { isGlobal, isHere, clean };
 };
 
 const extractCmds = (str) =>
-    str.replace(/@\d+/g, '').trim()
-        .split(',').map(s => s.trim()).filter(Boolean);
+    str
+        .replace(/@\d+/g, '')
+        .trim()
+        .split(',')
+        .map(s => s.trim().toLowerCase())
+        .filter((v, i, a) => v && a.indexOf(v) === i);
 
 const formatList = (rows, emptyMsg) => {
     if (!rows.length) return { text: emptyMsg, mentions: [], groupMentions: [] };
@@ -41,88 +45,76 @@ const formatList = (rows, emptyMsg) => {
     return { text: lines.join('\n\n'), mentions, groupMentions };
 };
 
+const applyAccess = async (message, match, manji, type) => {
+    const L = lang.plugins[type];
+    const arg = match?.trim();
+    if (!arg || arg === 'help') return message.send(L.usage.format(p()));
+
+    if (arg === 'list') {
+        const rows = settings.db
+            .prepare(`SELECT sender,jid,command,type FROM pubaccess WHERE type=? ORDER BY sender,jid`)
+            .all(type);
+        const { text, mentions, groupMentions } = formatList(rows, L.empty);
+        return message.send({ text, mentions, contextInfo: { groupMentions } });
+    }
+
+    if (arg === 'clear') {
+        settings.db.prepare(`DELETE FROM pubaccess WHERE type=?`).run(type);
+        return message.send(L.cleared);
+    }
+
+    const { isGlobal, isHere, clean } = parseArg(arg);
+    const chatJid = message.isGroup ? message.chat : (message.chatlid || message.chat);
+    const jid     = isGlobal ? 'global' : chatJid;
+
+    if (isHere) {
+        const rawList = extractCmds(clean);
+        const list = rawList.length ? rawList : ['*'];
+
+        for (const cmd of list)
+            type === 'allow'
+                ? settings.allow(chatJid, jid, cmd)
+                : settings.deny(chatJid, jid, cmd);
+
+        const label   = isGlobal ? 'globally' : 'for this chat';
+        const display = list.join(', ');
+        return message.send(L.success.format(chatJid, display, label));
+    }
+
+    const targets = await manji.getUserLid(message, clean);
+    if (!targets.length) return message.send(L.noTarget.format(p()));
+
+    const rawList  = extractCmds(clean);
+    const list     = rawList.length ? rawList : ['*'];
+
+    for (const sender of targets)
+        for (const cmd of list)
+            type === 'allow'
+                ? settings.allow(sender, jid, cmd)
+                : settings.deny(sender, jid, cmd);
+
+    const scope   = isGlobal ? 'globally' : 'in this chat';
+    const label   = targets.map(s => `@${s.split('@')[0]}`).join(', ');
+    const display = list.join(', ');
+
+    await message.send({
+        text: L.success.format(label, display, scope),
+        mentions: targets,
+    });
+};
+
+
 Command({
     pattern: 'allow ?(.*)',
     desc: lang.plugins.allow.desc,
     type: 'owner',
     sudo: true,
-}, async (message, match, manji) => {
-    const arg = match?.trim();
-    if (!arg || arg === 'help') return message.send(lang.plugins.allow.usage.format(p()));
+}, (message, match, manji) => applyAccess(message, match, manji, 'allow'));
 
-    if (arg === 'list') {
-        const rows = settings.db.prepare(`SELECT sender,jid,command,type FROM pubaccess WHERE type='allow' ORDER BY sender,jid`).all();
-        const { text, mentions, groupMentions } = formatList(rows, lang.plugins.allow.empty);
-        return message.send({ text, mentions, contextInfo: { groupMentions } });
-    }
-
-    if (arg === 'clear') {
-        settings.db.prepare(`DELETE FROM pubaccess WHERE type='allow'`).run();
-        return message.send(lang.plugins.allow.cleared);
-    }
-
-    const { isGlobal, isHere, rest } = parseArg(arg);
-    const chatJid = message.isGroup ? message.chat : (message.chatlid || message.chat);
-    const jid     = isGlobal ? 'global' : chatJid;
-    const targets = isHere ? [chatJid] : await manji.getUserLid(message, rest);
-
-    if (!targets.length) return message.send(lang.plugins.allow.noTarget.format(p()));
-
-    const list = isHere ? ['*'] : extractCmds(rest);
-    if (!list.length) return message.send(lang.plugins.allow.noCmd);
-
-    for (const sender of targets)
-        for (const cmd of list)
-            settings.allow(sender, jid, cmd);
-
-    const scope = isGlobal ? 'globally' : isHere ? 'for this chat' : 'in this chat';
-    const label = isHere ? chatJid : targets.map(s => `@${s.split('@')[0]}`).join(', ');
-
-    await message.send({
-        text: lang.plugins.allow.success.format(label, list.join(', '), scope),
-        mentions: isHere ? [] : targets,
-    });
-});
 
 Command({
     pattern: 'deny ?(.*)',
     desc: lang.plugins.deny.desc,
     type: 'owner',
     sudo: true,
-}, async (message, match, manji) => {
-    const arg = match?.trim();
-    if (!arg || arg === 'help') return message.send(lang.plugins.deny.usage.format(p()));
-
-    if (arg === 'list') {
-        const rows = settings.db.prepare(`SELECT sender,jid,command,type FROM pubaccess WHERE type='deny' ORDER BY sender,jid`).all();
-        const { text, mentions, groupMentions } = formatList(rows, lang.plugins.deny.empty);
-        return message.send({ text, mentions, contextInfo: { groupMentions } });
-    }
-
-    if (arg === 'clear') {
-        settings.db.prepare(`DELETE FROM pubaccess WHERE type='deny'`).run();
-        return message.send(lang.plugins.deny.cleared);
-    }
-
-    const { isGlobal, isHere, rest } = parseArg(arg);
-    const chatJid = message.isGroup ? message.chat : (message.chatlid || message.chat);
-    const jid     = isGlobal ? 'global' : chatJid;
-    const targets = isHere ? [chatJid] : await manji.getUserLid(message, rest);
-
-    if (!targets.length) return message.send(lang.plugins.deny.noTarget.format(p()));
-
-    const list = isHere ? ['*'] : extractCmds(rest);
-    if (!list.length) return message.send(lang.plugins.deny.noCmd);
-
-    for (const sender of targets)
-        for (const cmd of list)
-            settings.deny(sender, jid, cmd);
-
-    const scope = isGlobal ? 'globally' : isHere ? 'for this chat' : 'in this chat';
-    const label = isHere ? chatJid : targets.map(s => `@${s.split('@')[0]}`).join(', ');
-
-    await message.send({
-        text: lang.plugins.deny.success.format(label, list.join(', '), scope),
-        mentions: isHere ? [] : targets,
-    });
-});
+}, (message, match, manji) => applyAccess(message, match, manji, 'deny'));
