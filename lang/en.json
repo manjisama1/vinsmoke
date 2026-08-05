@@ -742,6 +742,38 @@
       "searching": "Searching for *{0}*...",
       "not_found": "No results found for that query.",
       "failed": "Failed to play: {0}"
+    },
+    "welcome": {
+      "desc": "Set or manage welcome message",
+      "usage": "*Usage:*\n> {0}welcome on/off/clear/info\n> {0}welcome set <text>\n\n*Variables:*\n> &mention  &groupname  &groupdescription\n> &totalmembers  &time  &date  &day\n> &image  (reply to image)\n> &video  (reply to video)\n> &audio  (reply to audio — sent as voice note)\n> &grouppicture\n\n*Example:*\n> {0}welcome set Welcome &mention to &groupname",
+      "botNotAdmin": "Bot needs admin",
+      "notAllowed": "Not allowed",
+      "set": "Welcome set:\n> {0}",
+      "cleared": "Welcome cleared",
+      "enabled": "Welcome enabled",
+      "disabled": "Welcome disabled",
+      "noConfig": "No welcome set",
+      "replyImage": "Reply to an image to use &image",
+      "replyVideo": "Reply to a video to use &video",
+      "replyAudio": "Reply to an audio to use &audio",
+      "mediaFail": "Failed to save media",
+      "info": "Status: {0}\nText: {1}\nMedia: {2}"
+    },
+    "goodbye": {
+      "desc": "Set or manage goodbye message",
+      "usage": "*Usage:*\n> {0}goodbye on/off/clear/info\n> {0}goodbye set <text>\n\n*Variables:*\n> &mention  &groupname  &groupdescription\n> &totalmembers  &time  &date  &day\n> &image  (reply to image)\n> &video  (reply to video)\n> &audio  (reply to audio — sent as voice note)\n> &grouppicture\n\n*Example:*\n> {0}goodbye set Goodbye &mention, we'll miss you",
+      "botNotAdmin": "Bot needs admin",
+      "notAllowed": "Not allowed",
+      "set": "Goodbye set:\n> {0}",
+      "cleared": "Goodbye cleared",
+      "enabled": "Goodbye enabled",
+      "disabled": "Goodbye disabled",
+      "noConfig": "No goodbye set",
+      "replyImage": "Reply to an image to use &image",
+      "replyVideo": "Reply to a video to use &video",
+      "replyAudio": "Reply to an audio to use &audio",
+      "mediaFail": "Failed to save media",
+      "info": "Status: {0}\nText: {1}\nMedia: {2}"
     }
   }
 }

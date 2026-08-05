@@ -1,6 +1,8 @@
 FROM node:24
 
-RUN apt-get update && apt-get install -y git ffmpeg python3 build-essential
+RUN apt-get update && apt-get install -y \
+    git ffmpeg python3 build-essential \
+    libsqlite3-dev
 
 RUN git clone https://github.com/manjisama1/vinsmoke.git /root/vinsmoke
 

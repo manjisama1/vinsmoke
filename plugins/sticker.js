@@ -128,22 +128,23 @@ Command({
 }, async (message, match, manji) => {
     const text = message.quoted?.text || match?.trim();
     if (!text) return message.send(lang.plugins.ws.noText);
-    
+
+    let imagePath = null;
     try {
         const senderName = message.quoted?.name || message.name || 'User';
-        const timeText = formatTime(message.quoted?.timestamp || message.timestamp);
-        const senderJid = message.quoted?.sender || message.sender;
-        
+        const timeText   = formatTime(message.quoted?.timestamp || message.timestamp);
+        const senderJid  = message.quoted?.sender || message.sender;
+
         let profilePicUrl;
         try { profilePicUrl = await manji.fetchProfilePic(senderJid); } catch {}
-        
-        const imagePath = await waChatss(text, senderName, timeText, profilePicUrl);
+
+        imagePath = await waChatss(text, senderName, timeText, profilePicUrl);
         if (!imagePath) return;
-        
+
         await message.send({ sticker: await sticker(imagePath) });
-        if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
-        
     } catch (error) {
         console.error('WS:', error);
+    } finally {
+        if (imagePath && fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
     }
 });
