@@ -370,6 +370,12 @@
       "failed": "Failed to download video",
       "invalid_url": "Invalid Instagram URL"
     },
+    "facebook": {
+      "desc": "Download Facebook videos",
+      "usage": "*Usage:*\n> .fb <link> or reply to a Facebook link",
+      "failed": "Failed to download video",
+      "invalid_url": "Invalid Facebook URL"
+    },
     "onwa": {
       "desc": "Check WhatsApp numbers",
       "usage": "*Usage:*\n> {0}onwa 919862717xxx",

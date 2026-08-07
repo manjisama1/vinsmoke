@@ -5,6 +5,7 @@ import {
     cleanup,
     spotifyDl,
     instaDl,
+    fbDl,
     downLoad,
     webpToImage,
     webpToMp4,
@@ -98,6 +99,30 @@ Command({
     }
 });
 
+Command({
+    pattern: 'facebook ?(.*)',
+    aliases: ['fb', 'fbdl'],
+    desc: lang.plugins.facebook.desc,
+    type: 'download',
+}, async (message, match) => {
+    const url = match?.trim() || message.quoted?.text?.match(/https?:\/\/(?:www\.|web\.|m\.)?(?:facebook\.com|fb\.watch)\/[^\s]+/)?.[0];
+    
+    if (!url) return message.send(lang.plugins.facebook.usage);
+    if (!/https?:\/\/(?:www\.|web\.|m\.)?(?:facebook\.com|fb\.watch)\/[^\s]+/.test(url)) {
+        return message.send(lang.plugins.facebook.invalid_url);
+    }
+
+    try {
+        const { hd, sd } = await fbDl(url);
+        const videoUrl = hd || sd;
+        if (!videoUrl) throw new Error('No video URL');
+
+        const video = Buffer.from((await axios.get(videoUrl, { responseType: 'arraybuffer', timeout: 60000 })).data);
+        await message.send({ video, mimetype: 'video/mp4' });
+    } catch {
+        await message.send(lang.plugins.facebook.failed);
+    }
+});
 
 Command({
     pattern: 'view',
