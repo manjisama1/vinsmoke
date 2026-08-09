@@ -46,23 +46,25 @@ Command({
 
 Command({
     pattern: 'pfp ?(.*)',
-    desc: 'Fetch user profile picture',
+    desc: lang.plugins.pfp.desc,
     type: 'tools',
 }, async (message, match, manji) => {
-    const input = match || message.quoted?.text || '';
-    if (!input) return message.send('Provide a number or JID');
+    const raw = match?.trim() || message.quoted?.sender || '';
 
-    const clean = input.replace(/[^0-9]/g, '');
-    const jid = input.includes('@s.whatsapp.net') ? input 
-        : clean ? `${clean}@s.whatsapp.net` 
-        : null;
+    const getJid = () => {
+        if (!raw) return message.isGroup ? message.chat : null;
+        if (raw.endsWith('@g.us') || raw.endsWith('@s.whatsapp.net') || raw.endsWith('@lid')) return raw;
+        const clean = raw.replace(/[^0-9]/g, '');
+        return clean ? `${clean}@s.whatsapp.net` : null;
+    };
 
-    if (!jid) return message.send('Invalid number or JID');
+    const jid = getJid();
+    if (!jid) return message.send(lang.plugins.pfp.invalid);
 
     const url = await manji.fetchProfilePic(jid, 'high');
 
     return url === 'https://i.imgur.com/dmxYQ8h.png'
-        ? message.send('_No profile picture found_')
+        ? message.send(lang.plugins.pfp.notFound)
         : message.send({ image: { url } });
 });
 

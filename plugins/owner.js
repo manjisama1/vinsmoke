@@ -25,15 +25,14 @@ const parseAD = (arg, mentionLids = []) => {
     if (jidGroups.length === 1) to.push(...jidGroups[0]);
     else if (jidGroups.length >= 2) { to.push(...jidGroups[0]); from.push(...jidGroups[1]); }
 
-    if (!to.length) to = null;
     const sf = sfMode && sfLids.length ? { mode: sfMode, lids: sfLids } : null;
-    return { to, from: from.length ? from : null, type, sf };
+    return { to: to.length ? to : null, from: from.length ? from : null, type, sf };
 };
 
 const adView = (cfg) => {
     const toLabel   = (cfg.to ?? ['own']).map(t => t === 'own' ? 'own' : t === 'here' ? 'here' : t).join(', ');
     const fromLabel = cfg.from?.length ? cfg.from.join(', ') : 'global';
-    const sfLabel   = cfg.sf ? `${cfg.sf.mode} ${(cfg.sf.lids ?? [cfg.sf.lid]).join(', ')}` : 'none';
+    const sfLabel   = cfg.sf ? `${cfg.sf.mode} ${(cfg.sf.lids ?? [cfg.sf.lid] ?? []).join(', ')}` : 'none';
     return lang.plugins.antidelete.view.format(
         cfg.on ? 'yes' : 'no', toLabel, cfg.type ?? 'all', fromLabel, sfLabel, cfg.status ? 'on' : 'off'
     );
@@ -240,6 +239,29 @@ Command({
     await message.send(lang.plugins.pp.updated);
 });
 
+Command({
+    pattern: 'fullpp ?(.*)',
+    desc: lang.plugins.fullpp.desc,
+    type: 'owner',
+    sudo: true,
+}, async (message, match, manji) => {
+    const jid = message.botJid;
+    const arg = (match || '').trim().toLowerCase();
+
+    if (arg === 'remove') {
+        await manji.ppUpdate({ jid, action: 'remove' });
+        return message.send(lang.plugins.fullpp.removed);
+    }
+
+    const image = message.image || message.quoted?.image;
+    if (!image) return message.send(lang.plugins.fullpp.noMedia);
+
+    const media = await downLoad(message.raw, 'buffer');
+    if (!media) return message.send(lang.plugins.fullpp.downloadFail);
+
+    await manji.ppUpdate({ jid, action: 'add', media, isFull: true });
+    return message.send(lang.plugins.fullpp.updated);
+});
 
 Command({
     pattern: 'reboot',
@@ -296,7 +318,6 @@ Command({
     }
 });
 
-
 Command({
     pattern: 'antidelete ?(.*)',
     desc: lang.plugins.antidelete.desc,
@@ -304,47 +325,60 @@ Command({
     sudo: true,
 }, async (message, match, manji) => {
     const arg = match?.trim() || '';
-    const get = () => settings.get('antidelete', 'config', {});
-    const save = (v) => settings.set('antidelete', 'config', v);
 
-    if (!arg) return message.send(adView(get()));
+    const get  = async () => await settings.get('antidelete', 'config', {});
+    const save = async (v) => await settings.set('antidelete', 'config', v);
+
+    const initialCfg = await get();
+
+    if (!arg) return message.send(adView(initialCfg));
     if (arg === 'help') return message.send(lang.plugins.antidelete.help.format(p()));
 
-    if (arg === 'on')         { save({ to: ['own'], from: [], type: 'all', sf: null, ...get(), on: true });  return message.send(lang.plugins.antidelete.on); }
-    if (arg === 'off')        { save({ ...get(), on: false });     return message.send(lang.plugins.antidelete.off); }
-    if (arg === 'status on')  { save({ ...get(), status: true });  return message.send(lang.plugins.antidelete.statusOn); }
-    if (arg === 'status off') { save({ ...get(), status: false }); return message.send(lang.plugins.antidelete.statusOff); }
-    if (arg === 'status')     return message.send(lang.plugins.antidelete.statusUsage.format(p()));
+    if (arg === 'on') { 
+        await save({ ...initialCfg, on: true, to: ['own'], from: [], type: 'all', sf: null });  
+        return message.send(lang.plugins.antidelete.on); 
+    }
+    if (arg === 'off') { 
+        await save({ ...initialCfg, on: false });     
+        return message.send(lang.plugins.antidelete.off); 
+    }
+    if (arg === 'status on') { 
+        await save({ ...initialCfg, status: true });  
+        return message.send(lang.plugins.antidelete.statusOn); 
+    }
+    if (arg === 'status off') { 
+        await save({ ...initialCfg, status: false }); 
+        return message.send(lang.plugins.antidelete.statusOff); 
+    }
+    if (arg === 'status') return message.send(lang.plugins.antidelete.statusUsage.format(p()));
 
     const VALID = new Set(['-h', '-o', '-gm', '-pm', '-g', '-f', '-fi']);
     const invalid = arg.split(/\s+/).filter(s => s.startsWith('-') && !VALID.has(s));
     if (invalid.length) return message.send(lang.plugins.antidelete.invalidFlags.format(invalid.join(', '), p()));
 
     const mentionLids = await manji.getUserLid(message, arg);
-    const { to, from, type, sf } = parseAD(arg, mentionLids);
-    const cur = get();
+    const parsed = parseAD(arg, mentionLids);
 
-    const resolvedTo = to
-        ? to.map(t => t === 'here' ? message.chat : t)
-        : cur.to ?? ['own'];
+    const resolvedTo = parsed.to
+        ? parsed.to.map(t => t === 'here' ? message.chat : t)
+        : (initialCfg.to ?? ['own']);
 
     const next = {
-        ...cur,
-        on: cur.on ?? true,
+        ...initialCfg,
+        on: initialCfg.on ?? true,
         to: resolvedTo,
-        ...(from !== null && { from }),
-        ...(type !== null && { type }),
-        ...(sf !== null && { sf }),
+        from: parsed.from !== null ? parsed.from : (initialCfg.from ?? []),
+        type: parsed.type !== null ? parsed.type : (initialCfg.type ?? 'all'),
+        sf: parsed.sf !== null ? parsed.sf : (initialCfg.sf ?? null)
     };
 
-    if (sf && cur.sf && sf.mode !== cur.sf.mode) next.sf = sf;
-
-    save(next);
+    await save(next);
 
     const toLabel   = resolvedTo.map(t => t === 'own' ? 'own' : t).join(', ');
     const fromLabel = (next.from ?? []).length ? next.from.join(', ') : 'global';
     const reply = next.sf
-        ? lang.plugins.antidelete.updatedSender.format(toLabel, next.type ?? 'all', fromLabel, `${next.sf.mode} ${(next.sf.lids ?? [next.sf.lid]).join(', ')}`)
+        ? lang.plugins.antidelete.updatedSender.format(toLabel, next.type ?? 'all', fromLabel, `${next.sf.mode} ${(next.sf.lids ?? [next.sf.lid] ?? []).join(', ')}`)
         : lang.plugins.antidelete.updated.format(toLabel, next.type ?? 'all', fromLabel);
+
     message.send(reply);
 });
