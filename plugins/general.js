@@ -1,4 +1,4 @@
-import { Command, lang, config } from '../lib/index.js';
+import { Command, lang, config, readmore } from '../lib/index.js';
 
 
 Command({
@@ -18,16 +18,37 @@ Command({
     pattern: 'menu ?(.*)',
     desc: 'Display command menu',
     type: 'general',
-}, async (message, match, manji) => {
+}, async (message, match) => {
     const query = match?.trim();
-    const text = manji.menu(
-        message.client.pluginManager,
-        manji.config, message, query);
-    return !text 
-        ? await message.reply(
-            `No categories matching "${query}"`
-        ) 
-        : await message.send(text);
+
+    const layout = {
+        header: `╭───────────────\n│     *{botName}*\n╰───────────────\n`,
+        botInfo: {
+            title: `┌─⊷ *BOT INFO*`,
+            border: `│ • `,
+            footer: `└───────────────`,
+            fields: [
+                { key: 'user', label: 'User' },
+                { key: 'totalCommands', label: 'Commands', suffix: ' cmds' },
+                { key: 'totalCategories', label: 'Categories', suffix: ' cats' },
+                { key: 'prefix', label: 'Prefix' },
+                { key: 'developer', label: 'Developer' }
+            ]
+        },
+        categories: {
+            header: `┌─⊷ *{category} COMMANDS* [{count}]`,
+            commandLine: `│ • {prefix}{name}{alias}{externalTag}`,
+            footer: `└───────────────`
+        },
+        readmore: true,
+        symbols: {
+            aliasSeparator: ' | ',
+            externalTag: ' 🔌'
+        }
+    };
+
+    const res = await message.menu(layout, query);
+    if (!res) return message.send(`No categories matching "${query}"`);
 });
 
 Command({

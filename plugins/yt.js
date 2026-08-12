@@ -19,7 +19,7 @@ Command({
 
     if (!flag || !query) return message.send(lang.plugins.yt.usage);
     
-    const yt = new Youtube(config.YT_COOKIE);
+    const yt = await new Youtube(config.YT_COOKIE);
 
     if (flag === '-s') {
         const res = await yt.search(query, 10).catch(() => null);
@@ -65,14 +65,23 @@ Command({
 }, async (message, match) => {
     const query = match?.trim();
     if (!query) return message.send(lang.plugins.play.usage.format(config.PREFIX));
-    const yt = new Youtube(config.YT_COOKIE);
+    const yt = await new Youtube(config.YT_COOKIE);
     const status = await message.send(lang.plugins.play.searching.format(query));
-    const search = await yt.search(query, 1).catch(() => null);
+let search;
+try {
+    search = await yt.search(query, 1);
+    console.log('[DEBUG play] search result:', search);
+} catch (e) {
+    console.error('[DEBUG play] search() threw:', e);
+    await status?.delete?.().catch(() => {});
+    return message.send(lang.plugins.play.not_found);
+}
 
-    if (!search?.length) {
-        await status?.delete?.().catch(() => {});
-        return message.send(lang.plugins.play.not_found);
-    }
+if (!search?.length) {
+    console.log('[DEBUG play] search returned empty array, length:', search?.length);
+    await status?.delete?.().catch(() => {});
+    return message.send(lang.plugins.play.not_found);
+}
 
     try {
         const res = await yt.audio(search[0].url, tempDir);

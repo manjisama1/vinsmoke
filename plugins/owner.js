@@ -286,35 +286,40 @@ Command({
     pattern: 'update ?(.*)',
     desc: lang.plugins.update.desc,
     type: 'owner',
-    sudo: true
+    sudo: true,
 }, async (message, match) => {
     try {
-        const current = await getCurrentHash();
+        const cur = await getCurrentHash();
 
         if (!match) {
-            const hasUpdate = await hasUpdates();
-            if (!hasUpdate) return await message.send(lang.plugins.update.upToDate.format(current));
+            const hasUp = await hasUpdates();
+            if (!hasUp) return await message.send(lang.plugins.update.upToDate.format(cur));
 
             const latest = await getLatestHash();
-            return await message.send(lang.plugins.update.available.format(current, latest));
+            return await message.send(lang.plugins.update.available.format(cur, latest));
         }
 
-        if (match.startsWith('list')) {
-            const count = parseInt(match.split(' ')[1]) || 15;
-            const commits = await getCommits(count);
-            const list = commits.map(c => `> ${c.date} - \`${c.hash}\` : ${c.message}`).join('\n');
-            return await message.send(lang.plugins.update.commits.format(list));
+        const raw = match.trim();
+        const cmd = raw.toLowerCase();
+
+        if (cmd.startsWith('list')) {
+            const limit     = parseInt(raw.split(' ')[1]) || 15;
+            const list      = await getCommits(limit);
+            const formatted = list.map((c) => `> ${c.date} - \`${c.hash}\` : ${c.message}`).join('\n');
+            return await message.send(lang.plugins.update.commits.format(formatted));
         }
 
-        const target = match === 'now' ? 'origin/main' : match;
-        await message.send(lang.plugins.update.updatingTo.format(target));
+        const isNow  = cmd === 'now';
+        const hash   = isNow ? await getLatestHash() : raw;
+        const target = isNow ? 'origin/main' : raw;
 
+        await message.send(lang.plugins.update.updatingTo.format(hash));
         await updateToCommit(target);
-
         await message.send(lang.plugins.update.updated);
+
         process.exit(0);
-    } catch (error) {
-        await message.send(lang.plugins.update.failed.format(error.message));
+    } catch (err) {
+        await message.send(lang.plugins.update.failed.format(err.message));
     }
 });
 

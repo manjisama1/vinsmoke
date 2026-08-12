@@ -48,7 +48,7 @@ const FSM = {
 Command({
     pattern: 'file ?(.*)',
     desc: 'Professional File System Manager',
-    type: 'utility',
+    type: 'tools',
     sudo: true
 }, async (message, match) => {
     // FIX: Add null coalescing check for match
