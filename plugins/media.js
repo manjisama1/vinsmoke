@@ -5,6 +5,7 @@ import {
     cleanup,
     spotifyDl,
     instaDl,
+    instaData,
     fbDl,
     downLoad,
     webpToImage,
@@ -74,26 +75,63 @@ Command({
     }
 });
 
-
 Command({
     pattern: 'instagram ?(.*)',
     aliases: ['ig', 'insta'],
     desc: lang.plugins.instagram.desc,
     type: 'download',
 }, async (message, match) => {
-    const url = match?.trim() || message.quoted?.text?.match(/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+/)?.[0];
-    
-    if (!url) return message.send(lang.plugins.instagram.usage);
-    if (!/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+/.test(url)) {
-        return message.send(lang.plugins.instagram.invalid_url);
-    }
+    const input = match?.trim() || message.quoted?.text?.trim();
+    if (!input) return message.send(lang.plugins.instagram.usage);
+
+    const isUser = input.startsWith('-s') || 
+                   (input.includes('instagram.com/') && !/\/(p|reel|tv)\//.test(input));
 
     try {
-        const videoUrl = await instaDl(url);
-        if (!videoUrl) throw new Error('No video URL');
+        if (isUser) {
+            const user = input.replace(/^-s\s*/i, '').trim();
+            const info = await instaData(user);
+            
+            if (!info) return message.send(lang.plugins.instagram.failed);
 
-        const video = Buffer.from((await axios.get(videoUrl, { responseType: 'arraybuffer', timeout: 60000 })).data);
-        await message.send({ video, mimetype: 'video/mp4' });
+            const { data } = await axios.get(info.pfpUrl, {
+                responseType: 'arraybuffer',
+                timeout: 15000,
+            });
+
+            const capTion = [
+                `Username: @${info.username}`,
+                `Name: ${info.name}`,
+                `Status: ${info.isPrivate ? 'Private' : 'Public'}`,
+                `Verified: ${info.isVerified ? 'Yes' : 'No'}`,
+                `Followers: ${info.followers}`,
+                `Following: ${info.following}`,
+                `Posts: ${info.posts}`,
+                `Bio: ${info.bio}`,
+                `Link: ${info.externalUrl || 'None'}`
+            ].join('\n');
+
+            return await message.send({
+                image: Buffer.from(data),
+                caption: capTion,
+            });
+        }
+
+        const link = input.match(/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+/)?.[0];
+        if (!link) return message.send(lang.plugins.instagram.invalid_url);
+
+        const vidUrl = await instaDl(link);
+        if (!vidUrl) throw new Error();
+
+        const { data } = await axios.get(vidUrl, {
+            responseType: 'arraybuffer',
+            timeout: 60000,
+        });
+
+        await message.send({
+            video: Buffer.from(data),
+            mimetype: 'video/mp4',
+        });
     } catch {
         await message.send(lang.plugins.instagram.failed);
     }
