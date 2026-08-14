@@ -370,9 +370,9 @@
       "invalid_url": "Invalid Spotify URL"
     },
     "instagram": {
-      "desc": "Download Instagram videos",
-      "usage": "*Usage:*\n> .insta <link> or reply to an Instagram link",
-      "failed": "Failed to download video",
+      "desc": "Download Instagram media or fetch user profile info",
+      "usage": "Usage: .insta <link> or .insta -s <username>",
+      "failed": "Failed to process request",
       "invalid_url": "Invalid Instagram URL"
     },
     "facebook": {

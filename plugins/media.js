@@ -84,40 +84,56 @@ Command({
     const input = match?.trim() || message.quoted?.text?.trim();
     if (!input) return message.send(lang.plugins.instagram.usage);
 
-    const isUser = input.startsWith('-s') || 
-                   (input.includes('instagram.com/') && !/\/(p|reel|tv)\//.test(input));
+    const hasSearchFlag = /^-s\b/i.test(input);
+    const cleanInput = input.replace(/^-s\s*/i, '').trim();
+
+    const mediaLinkMatch = cleanInput.match(/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/i);
+
+    const isUser = hasSearchFlag || (
+        cleanInput.includes('instagram.com/') && !mediaLinkMatch
+    ) || (
+        !cleanInput.includes('instagram.com/') && !cleanInput.includes('http')
+    );
 
     try {
         if (isUser) {
-            const user = input.replace(/^-s\s*/i, '').trim();
-            const info = await instaData(user);
-            
+            let username = cleanInput;
+
+            if (cleanInput.includes('instagram.com/')) {
+                const urlMatch = cleanInput.match(/instagram\.com\/([a-zA-Z0-9_.]+)/i);
+                if (urlMatch) username = urlMatch[1];
+            }
+
+            username = username.replace(/^@/, '').trim();
+            const info = await instaData(username);
             if (!info) return message.send(lang.plugins.instagram.failed);
 
-            const { data } = await axios.get(info.pfpUrl, {
-                responseType: 'arraybuffer',
-                timeout: 15000,
-            });
-
-            const capTion = [
-                `Username: @${info.username}`,
-                `Name: ${info.name}`,
-                `Status: ${info.isPrivate ? 'Private' : 'Public'}`,
-                `Verified: ${info.isVerified ? 'Yes' : 'No'}`,
-                `Followers: ${info.followers}`,
-                `Following: ${info.following}`,
-                `Posts: ${info.posts}`,
-                `Bio: ${info.bio}`,
-                `Link: ${info.externalUrl || 'None'}`
+            const caption = [
+                'Username: @' + info.username,
+                'Name: ' + info.name,
+                'Status: ' + (info.isPrivate ? 'Private' : 'Public'),
+                'Verified: ' + (info.isVerified ? 'Yes' : 'No'),
+                'Followers: ' + info.followers,
+                'Following: ' + info.following,
+                'Posts: ' + info.posts
             ].join('\n');
 
-            return await message.send({
-                image: Buffer.from(data),
-                caption: capTion,
-            });
+            if (info.pfpUrl) {
+                const { data } = await axios.get(info.pfpUrl, {
+                    responseType: 'arraybuffer',
+                    timeout: 15000,
+                });
+
+                return await message.send({
+                    image: Buffer.from(data),
+                    caption: caption,
+                });
+            }
+
+            return await message.send(caption);
         }
 
-        const link = input.match(/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[a-zA-Z0-9_-]+/)?.[0];
+        const link = mediaLinkMatch ? mediaLinkMatch[0] : null;
         if (!link) return message.send(lang.plugins.instagram.invalid_url);
 
         const vidUrl = await instaDl(link);

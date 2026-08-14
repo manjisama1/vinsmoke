@@ -35,7 +35,7 @@ Command({
         },
     };
 
-    const res = await message.menu(layout, query);
+    const res = await message.menu(layout, query, { forceDefault: true });
     return res || message.send(`No categories matching "${query}"`);
 });
 
