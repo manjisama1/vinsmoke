@@ -1,6 +1,5 @@
 import { Command, lang, config, calculate, Translate, downLoad  } from '../lib/index.js';
 import fs from 'fs';
-const tr = new Translate();
 
 const LANG_MAP = {
     js: 'javascript', ts: 'typescript', py: 'python', sh: 'bash', rb: 'ruby',
@@ -90,6 +89,7 @@ Command({
     desc: lang.plugins.translate.desc,
     type: 'tools'
 }, async (message, match) => {
+    const tr = await new Translate();
     let from = 'auto', to = 'en', targetText = message.quoted?.text || match;
 
     if (!targetText) return await message.reply(lang.plugins.translate.no_text);

@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: vinsmoke
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: SESSION_ID
+        value: ""
+      - key: PREFIX
+        value: ""
+      - key: REACT
+        value: ""
+      - key: STICKER_PACK
+        value: ""
+      - key: BOT_MODE
+        value: ""
+      - key: SUDO
+        value: ""
+      - key: QR
+        value: ""
+      - key: BOT_NUM
+        value: ""
+      - key: WARN
+        value: ""
+      - key: TIMEZONE
+        value: ""
+      - key: ADMIN_VALUE
+        value: ""
+      - key: BOT_LANG
+        value: ""
+      - key: AUTO_READ
+        value: ""
+      - key: AUTO_STATUS_READ
+        value: ""
+      - key: ALWAYS_ONLINE
+        value: ""
