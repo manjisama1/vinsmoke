@@ -18,7 +18,7 @@ Command({
                 { key: 'user', label: 'User' },
                 { key: 'totalCommands', label: 'Commands', suffix: ' cmds' },
                 { key: 'totalCategories', label: 'Categories', suffix: ' cats' },
-                { key: 'version', label: 'Version', suffix: 'v' },
+                { key: 'version', label: 'Version', prefix: '^' },
                 { key: 'prefix', label: 'Prefix' },
                 { key: 'developer', label: 'Developer' },
             ],

@@ -395,29 +395,62 @@
       "bioInfo": "{0}\nBIO: {1}\nBIO SET AT: {2}"
     },
     "pp": {
-      "desc": "Update or remove bot profile picture",
-      "removed": "Profile picture removed",
-      "updated": "Profile picture updated",
-      "noMedia": "Send or reply with an image",
-      "downloadFail": "Failed to download media"
+      "desc": "Set profile icon",
+      "removed": "Icon removed",
+      "updated": "Icon updated",
+      "noMedia": "Reply to an image",
+      "downloadFail": "Download failed"
     },
     "fullpp": {
-      "desc": "Set full uncropped profile picture",
-      "removed": "Profile picture removed.",
-      "noMedia": "Reply to or attach an image.",
-      "downloadFail": "Failed to download image.",
-      "updated": "Profile picture updated."
+      "desc": "Set full profile icon",
+      "removed": "Icon removed",
+      "noMedia": "Reply to an image",
+      "downloadFail": "Download failed",
+      "updated": "Icon updated"
+    },
+    "gInfo": {
+      "desc": "Shows group information via link or JID",
+      "sudoOnly": "Sudo only command",
+      "noInput": "Provide a link or JID",
+      "notInGroup": "Not in group",
+      "invalidLink": "_Invalid link",
+      "failed": "_Failed to fetch info",
+      "error": "Error: {0}",
+      "unknown": "Unknown",
+      "none": "None",
+      "yes": "Yes",
+      "no": "No",
+      "admins": "Admins",
+      "everyone": "Everyone",
+      "approval": "Approval",
+      "anyone": "Anyone",
+      "noDescription": "No description",
+      "settingMessages": "Messages: {0}",
+      "settingEdit": "Edit Info: {0}",
+      "settingJoin": "Join: {0}",
+      "settingAdd": "Add Members: {0}",
+      "infoTemplate": "*Group Info*\n\n*Name:* {0}\n*JID:* {1}\n*Members:* {2}\n*Created:* {3}\n*Admins:* {4}\n*SuperAdmins:* {5}\n*Community:* {6}\n\n*Settings:*\n• {7}\n\n*Description:*\n{8}"
     },
     "gpp": {
-      "desc": "Update or remove group profile picture",
-      "removed": "Group profile picture removed",
-      "updated": "Group profile picture updated",
-      "noMedia": "Send or reply with an image",
-      "downloadFail": "Failed to download media",
-      "groupOnly": "This command only works in groups",
-      "notMember": "Bot is not a member of this group",
-      "notAdmin": "Bot is not an admin in this group",
-      "notAllowed": "Not allowed"
+      "desc": "Set group profile icon",
+      "removed": "Icon removed",
+      "updated": "Icon updated",
+      "noMedia": "Reply to an image",
+      "downloadFail": "Download failed",
+      "groupOnly": "Group only",
+      "notMember": "Bot not in group",
+      "notAdmin": "Bot must be admin",
+      "notAllowed": "Permission denied"
+    },
+    "gfullpp": {
+      "desc": "Set full group profile icon",
+      "groupOnly": "Group only",
+      "notAdmin": "Bot must be admin",
+      "notAllowed": "Permission denied",
+      "removed": "Icon removed",
+      "noMedia": "Reply to an image",
+      "downloadFail": "Download failed",
+      "updated": "Icon updated"
     },
     "gsubject": {
       "desc": "Change group subject",

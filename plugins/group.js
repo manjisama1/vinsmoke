@@ -543,54 +543,62 @@ Command({
     }
 });
 
-//have to use lang here
 Command({
     pattern: 'ginfo ?(.*)',
-    desc: 'Shows group information via link or JID',
+    desc: lang.plugins.gInfo.desc,
     type: 'owner',
 }, async (message, match, manji) => {
     const isSudo = message.fromMe 
         || manji.envList('SUDO').includes(message.sender) 
         || message.isSudo;
-    if (!isSudo) return await message.send('_Sudo only command_');
+        
+    if (!isSudo) return await message.send(lang.plugins.gInfo.sudoOnly);
+    
     const input = match || message.quoted?.text;
-    if (!input) return await message.send('_Provide a link or JID_');
+    if (!input) return await message.send(lang.plugins.gInfo.noInput);
+    
     try {
         let info = null;
         if (input.endsWith('@g.us')) {
             try { info = await manji.gdata(input); } 
-            catch { return await message.send('_Not in group_'); }
+            catch { return await message.send(lang.plugins.gInfo.notInGroup); }
         } else {
             const code = input.includes('chat.whatsapp.com/') 
                 ? input.match(/chat\.whatsapp\.com\/([a-zA-Z0-9]+)/)?.[1] 
                 : input;
-            if (!code || !/^[a-zA-Z0-9]+$/.test(code)) return await message.send('_Invalid link_');
+            if (!code || !/^[a-zA-Z0-9]+$/.test(code)) return await message.send(lang.plugins.gInfo.invalidLink);
             info = await manji.gInfo(code);
         }
-        if (!info) return await message.send('_Failed to fetch info_');
+        
+        if (!info) return await message.send(lang.plugins.gInfo.failed);
+        
         const participants = info.participants || [];
         const admins = participants.filter(p => p.admin === 'admin' || p.admin === 'superadmin');
         const superAdmins = participants.filter(p => p.admin === 'superadmin');
         const date = new Date((info.creation || info.creationTime) * 1000);
+        
         const settings = [
-            `Messages: ${info.announce ? 'Admins' : 'Everyone'}`,
-            `Edit Info: ${info.restrict ? 'Admins' : 'Everyone'}`,
-            `Join: ${info.joinApprovalMode ? 'Approval' : 'Anyone'}`,
-            `Add Members: ${info.memberAddMode ? 'Admins' : 'Everyone'}`
+            lang.plugins.gInfo.settingMessages.format(info.announce ? lang.plugins.gInfo.admins : lang.plugins.gInfo.everyone),
+            lang.plugins.gInfo.settingEdit.format(info.restrict ? lang.plugins.gInfo.admins : lang.plugins.gInfo.everyone),
+            lang.plugins.gInfo.settingJoin.format(info.joinApprovalMode ? lang.plugins.gInfo.approval : lang.plugins.gInfo.anyone),
+            lang.plugins.gInfo.settingAdd.format(info.memberAddMode ? lang.plugins.gInfo.admins : lang.plugins.gInfo.everyone)
         ];
-        const text = `*Group Info*\n\n` +
-            `*Name:* ${info.subject || 'Unknown'}\n` +
-            `*JID:* ${info.id || 'Unknown'}\n` +
-            `*Members:* ${info.size || participants.length}\n` +
-            `*Created:* ${date.toLocaleDateString()} at ${date.toLocaleTimeString()}\n` +
-            `*Admins:* ${admins.length}\n` +
-            `*SuperAdmins:* ${superAdmins.length ? superAdmins.map(a => manji.jidToNum(a.id)).join(', ') : 'None'}\n` +
-            `*Community:* ${info.isCommunity ? 'Yes' : 'No'}\n\n` +
-            `*Settings:*\n• ${settings.join('\n• ')}\n\n` +
-            `*Description:*\n${info.desc || info.description || 'No description'}`;
+        
+        const text = lang.plugins.gInfo.infoTemplate.format(
+            info.subject || lang.plugins.gInfo.unknown,
+            info.id || lang.plugins.gInfo.unknown,
+            info.size || participants.length,
+            `${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`,
+            admins.length,
+            superAdmins.length ? superAdmins.map(a => manji.jidToNum(a.id)).join(', ') : lang.plugins.gInfo.none,
+            info.isCommunity ? lang.plugins.gInfo.yes : lang.plugins.gInfo.no,
+            settings.join('\n• '),
+            info.desc || info.description || lang.plugins.gInfo.noDescription
+        );
+        
         await message.send(text);
     } catch (e) {
-        await message.send(`_Error: ${e.message}_`);
+        await message.send(lang.plugins.gInfo.error.format(e.message));
     }
 });
 
@@ -633,6 +641,36 @@ Command({
     await message.send(lang.plugins.gpp.updated);
 });
 
+Command({
+    pattern: 'gfullpp ?(.*)',
+    desc: lang.plugins.gfullpp.desc,
+    type: 'group'
+}, async (message, match, manji) => {
+    if (!message.isGroup) return await message.send(lang.plugins.gfullpp.groupOnly);
+    if (!await manji.isBotAdmin(message.chat)) return await message.send(lang.plugins.gfullpp.notAdmin);
+    
+    const isSudo = message.fromMe 
+        || manji.envList('SUDO').includes(message.sender) 
+        || message.isSudo;
+    const isAdmin = await message.admin();
+    
+    if (!isSudo && !(config.ADMIN_VALUE && isAdmin)) return await message.send(lang.plugins.gfullpp.notAllowed);
+    
+    const arg = (match || '').trim().toLowerCase();
+    if (arg === 'remove') {
+        await manji.ppUpdate({ jid: message.chat, action: 'remove' });
+        return await message.send(lang.plugins.gfullpp.removed);
+    }
+    
+    const image = message.image || message.quoted?.image;
+    if (!image) return await message.send(lang.plugins.gfullpp.noMedia);
+    
+    const media = await downLoad(message.raw, 'buffer');
+    if (!media) return await message.send(lang.plugins.gfullpp.downloadFail);
+    
+    await manji.ppUpdate({ jid: message.chat, action: 'add', media, isFull: true });
+    return await message.send(lang.plugins.gfullpp.updated);
+});
 
 Command({
     pattern: 'gsubject ?(.*)',

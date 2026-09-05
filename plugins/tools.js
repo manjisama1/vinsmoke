@@ -1,4 +1,4 @@
-import { Command, lang, config, calculate, Translate, downLoad  } from '../lib/index.js';
+import { Command, lang, config, calculate, html, Translate, downLoad, qrcode  } from '../lib/index.js';
 import fs from 'fs';
 
 const LANG_MAP = {
@@ -36,12 +36,15 @@ Command({
     desc: lang.plugins.calculate.desc,
     type: 'tools'
 }, async (message, match) => {
-    if (!match) return message.send(lang.plugins.calculate.usage.format(config.PREFIX));
-    
-    const expr = match.trim();
-    const result = calculate(expr);
-    
-    await message.send(lang.plugins.calculate.result.format(expr, result));
+    const input = match ? match.trim() : '';
+    if (!input) {
+        return await message.web(html.calculator);
+    }
+    if (input.toLowerCase() === 'help') {
+        return await message.send(lang.plugins.calculate.usage.format(config.PREFIX));
+    }
+    const result = await calculate(input);
+    await message.send(lang.plugins.calculate.result.format(input, result));
 });
 
 Command({
@@ -193,4 +196,36 @@ Command({
     if (!blocks.length) return message.send(lang.plugins.table.no_content);
 
     await message.table(blocks);
+});
+
+Command({
+    pattern: 'qrcode ?(.*)',
+    aliases: ['qr'],
+    desc: 'Generate or scan QR code',
+    type: 'tools',
+}, async (message, match) => {
+    const isImg = message.type === 'image' ||
+        message.image ||
+        message.quoted?.type === 'image' ||
+        message.quoted?.image;
+
+    if (isImg) {
+        const target = message.raw;
+
+        const buf = await downLoad(target, 'buffer');
+        if (!buf) return message.send('Failed to download image.');
+
+        const res = await qrcode.decode(buf);
+        if (!res?.text) return message.send('No QR code found in image.');
+
+        return message.send(res.text);
+    }
+
+    const text = match?.trim() || message.quoted?.text;
+    if (!text) return message.send('Provide text or reply to an image/text.');
+
+    const url = await qrcode.geTUrl(text);
+    const data = Buffer.from(url.split(',')[1], 'base64');
+
+    return message.send({ image: data });
 });
