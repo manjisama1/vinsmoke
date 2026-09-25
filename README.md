@@ -14,13 +14,14 @@
 
 ## Features
 
-- **Multi-Device Support** - QR code and pairing code authentication
-- **Group Management** - Admin controls, anti-link, anti-word, user banning
-- **Media Processing** - Sticker creation, view-once bypass, auto-steal
-- **Content Downloads** - Spotify, Instagram, Pinterest, Telegram stickers
-- **Utility Tools** - Fancy text, number validation, message tracking
-- **Admin Features** - Variable management, sudo system, bot control
-- **LID/PN Mapping** - Professional JID handling with Baileys v7 support
+- **Multi-Device Support** — QR code and pairing code authentication, with automatic local-session and cloud-session recovery
+- **Group Management** — admin controls, welcome/goodbye messages, participant actions, anti-delete forwarding
+- **Media Processing** — sticker creation/conversion, view-once bypass, cropping, resizing, rotation, audio extraction
+- **Content Downloads** — Spotify, Instagram (posts/reels + profile lookup), Facebook, Telegram stickers, Pinterest
+- **Rich Message Responses** — syntax-highlighted code blocks, HTML rich responses, and tables (Meta AI-style rendering)
+- **Utility Tools** — polls, contacts, locations, ephemeral messages, message editing/starring
+- **Admin Features** — live config editing, sudo system, per-command/per-chat public access grants
+- **LID/PN Mapping** — JID handling across Baileys' LID and phone-number addressing modes
 
 ## Quick Setup
 
@@ -62,42 +63,71 @@ SESSION_ID=
 npm start
 ```
 
-## Configuration Guide
+On boot the bot tries, in order: a valid local `session/creds.json`, then a cloud session fetched via `SESSION_ID`, then falls back to fresh QR/pairing authentication.
 
-### Essential Settings
+## Configuration
+
+Settings live in `config.env` as simple `KEY=value` pairs and are reloaded live (no restart needed) whenever changed through an admin command.
+
 ```env
 # Authentication
-SESSION_ID=                 # Session from web generator
-QR=true                    # true=QR code, false=pairing code
-BOT_NUM=                   # Your number (for pairing mode)
+SESSION_ID=                # Session ID from the web generator
+QR=false                   # true = QR code, false = pairing code
+BOT_NUM=                   # Your number, with country code (for pairing mode)
 
 # Bot Settings
 PREFIX=.                   # Command prefix
-BOT_MODE=private          # public/private
-SUDO=                     # Sudo users (comma-separated)
+BOT_MODE=private           # public | private
+SUDO=                      # Comma-separated sudo user numbers/LIDs
 
-# Features
-AUTO_READ=false           # Auto-read messages
-STICKER_PACK=VINSMOKE     # Default sticker pack name
-```
-
-### Advanced Configuration
-```env
-# Database
-DATABASE_URL=             # PostgreSQL URL (we aren't using this so skip it)
+# Behavior
+AUTO_READ=false            # Auto-read incoming messages
+AUTO_STATUS_READ=false     # Auto-read status updates
+ALWAYS_ONLINE=false        # Force "online" presence
+DELETE=false               # Enable anti-delete forwarding
+REACT=⏳                   # Default command-reaction emoji ('' disables reactions)
 
 # Media
-MAX_SIZE=100              # Max file size (MB)
-TIMEZONE=Asia/Kolkata     # Bot timezone
-
-# Security
-ANTI_DELETE=false         # Anti-delete protection
-LOGS=false               # Enable logging
+STICKER_PACK=PackName,AuthorName   # Comma-separated: name, author
+TIMEZONE=Asia/Kolkata
 ```
+
+> Runtime data that needs to persist across restarts and isn't a simple toggle — per-command public access grants, saved custom menu layouts, anti-delete rule sets — is stored in a local SQLite database (`lib/db/settings.db`) rather than in `config.env`, and is managed through in-chat admin commands.
 
 ## Core APIs
 
-### Listen - Event System
+### Command — Register a Command
+
+```javascript
+import { Command } from '../lib/index.js';
+
+Command({
+    pattern: 'hello ?(.*)',
+    desc: 'Greet users',
+    type: 'misc'
+}, async (message, match, manji) => {
+    await message.send(`Hello ${match || 'World'}!`);
+});
+```
+
+See **[PLUGIN_DEVELOPMENT.md](./PLUGIN_DEVELOPMENT.md)** for the full command-config reference and the complete `Message` API.
+
+### Listen — Per-Message-Type Plugin Listeners
+
+Runs on every incoming message whose type matches, independent of any command prefix:
+
+```javascript
+import { Listen } from '../lib/index.js';
+
+Listen({ on: 'text', group: true }, async (message) => {
+    // runs for every plain-text group message
+});
+```
+
+### listen — Raw Baileys Event Bus
+
+A lower-level event emitter wired to the socket, for events beyond new messages:
+
 ```javascript
 import { listen } from '../lib/index.js';
 
@@ -107,35 +137,32 @@ listen.on('message.update', async (updates) => {
     }
 });
 
-listen.on('message', async ({ messages, type }) => {
-    console.log('New messages:', messages.length);
-});
-
 listen.on('group.participants', async (data) => {
     console.log('Group update:', data.id, data.action);
 });
 ```
 
-**Available Events:**
-`message` `message.update` `message.delete` `receipt` `presence` `connection` `creds` `chat` `chat.update` `chat.delete` `contact` `contact.update` `group` `group.update` `group.participants` `block` `block.update` `call` `label` `label.assoc` `history` `lid` `phone.share`
+**Available events:** `message` `message.update` `message.delete` `receipt` `presence` `connection` `creds` `chat` `chat.update` `chat.delete` `contact` `contact.update` `group` `group.update` `group.participants` `block` `block.update` `call` `label` `label.assoc` `history` `lid` `phone.share`
 
-### Store - Message Storage
+### Store — In-Memory Message Cache
+
 ```javascript
 import { store } from '../lib/index.js';
 
-const msg = store.get(messageId);
-const raw = store.getRaw(jid, messageId);
+const msg     = store.get(messageId);
+const raw     = store.getRaw(jid, messageId);
 const history = store.history(jid, 50);
-const stats = store.stats();
+const stats   = store.stats();
 ```
 
 ## Plugin System
 
-### Plugins site
-Explore all available plugins: https://vinsmoke-ten.vercel.app/plugins
+### Plugins Site
+Explore all available community plugins: https://vinsmoke-ten.vercel.app/plugins
 
 ### Custom Plugin Development
-Create plugins and upload in our site
+
+Drop plugin files into `mPlugins/` — they're loaded after (and take priority over) the built-in `plugins/` directory for any overridable command.
 
 ```javascript
 import { Command, lang } from '../lib/index.js';
@@ -150,20 +177,32 @@ Command({
 });
 ```
 
+Full guide, including every `Message` property/method and the `manji` helper surface: **[PLUGIN_DEVELOPMENT.md](./PLUGIN_DEVELOPMENT.md)**
+
 ## Project Structure
 
 ```
 vinsmoke/
-├── lib/                  # Core library files
-│   ├── client.js        # WhatsApp client
-│   ├── manji.js         # Main bot class
-│   ├── message.js       # Message handling
-│   └── config.js        # Configuration management
-├── plugins/             # Built-in plugins
-├── mPlugins/           # Custom plugins
-├── lang/               # Language files
-├── session/            # WhatsApp session data
-└── config.env          # Environment configuration
+├── lib/
+│   ├── bot.js              # Main bot bootstrap (VinsmokeBot)
+│   ├── client.js           # WhatsApp socket connection & LID/PN utilities
+│   ├── message.js          # Message class — parsing, sending, quoting, media
+│   ├── message-handler.js  # Command routing, permissions, rate limiting
+│   ├── plugin-manager.js   # Plugin loading & command/listener registry
+│   ├── manji.js            # Manji helper class (group tools, JID utils, trackers, menu)
+│   ├── eventon.js          # Internal event wiring (anti-delete, welcome/goodbye, etc.)
+│   ├── listen.js           # Low-level event bus (Listener/EventEmitter)
+│   ├── config.js           # config.env reader/writer, live-reloadable
+│   ├── settings.js         # SQLite-backed persistent settings & access control
+│   ├── store.js            # In-memory message store
+│   ├── scrapers.js         # Spotify / Instagram / Facebook / Telegram / Pinterest
+│   ├── functions.js        # Media download & conversion helpers
+│   └── index.js            # Single entry point re-exporting the whole library
+├── plugins/                # Built-in commands
+├── mPlugins/               # Your custom commands (overrides built-ins where allowed)
+├── lang/                   # Language files
+├── session/                # WhatsApp session data
+└── config.env              # Environment configuration
 ```
 
 ## Troubleshooting
@@ -171,19 +210,18 @@ vinsmoke/
 ### Common Issues
 
 **Session Problems:**
-- Use web generator if terminal auth fails
-- Clear `session/` folder for fresh start
-- Ensure correct phone number format
+- Use the web generator if terminal auth fails
+- Clear the `session/` folder for a fresh start
+- Ensure the phone number includes the correct country code
 
 **Connection Issues:**
-- Check internet connection
+- Check your internet connection
 - Verify Node.js version (20.0.0+)
-- Install FFmpeg for media processing
+- Install FFmpeg — required for media processing (stickers, voice notes, GIF conversion)
 
 **Plugin Errors:**
-- Check plugin syntax
-- Verify import statements
-- Review error logs
+- Check plugin syntax and import paths
+- Errors during command execution are reported automatically to the bot's own chat with file/line context
 
 ### FAQ & Support
 
@@ -196,31 +234,26 @@ https://vinsmoke-ten.vercel.app/faq
 - Node.js v20.0.0 or higher
 - FFmpeg (for media processing)
 - Git
-- pm2
+- pm2 (recommended for production process management)
 
-### Debug Mode
+### Debug Commands
 ```bash
-# Track messages for debugging
-.track 10
-
-# Check bot status
-.status
-
-# View response
-.ping
+.status   # Bot status/uptime/resource usage
+.ping     # Response time check
 ```
 
 ### Contributing
 1. Fork the repository
-2. Create feature branch
-3. Make changes
+2. Create a feature branch
+3. Make your changes
 4. Test thoroughly
-5. Submit pull request
+5. Submit a pull request
 
 ## Resources
 
 - **Session Generator**: https://vinsmoke-ten.vercel.app/session
 - **Plugin Library**: https://vinsmoke-ten.vercel.app/plugins
+- **Plugin Development Guide**: [PLUGIN_DEVELOPMENT.md](./PLUGIN_DEVELOPMENT.md)
 - **FAQ**: https://vinsmoke-ten.vercel.app/faq
 - **Support**: https://vinsmoke-ten.vercel.app/support
 - **GitHub Issues**: https://github.com/manjisama1/vinsmoke/issues
@@ -228,8 +261,8 @@ https://vinsmoke-ten.vercel.app/faq
 ## Credits
 
 Special thanks to:
-- **[Baileys](https://github.com/WhiskeySockets/Baileys)** - The amazing WhatsApp Web API library that powers this bot
-- **[WhiskeySockets](https://github.com/WhiskeySockets)** - For maintaining and developing Baileys
+- **[Baileys](https://github.com/WhiskeySockets/Baileys)** — The WhatsApp Web API library that powers this bot
+- **[WhiskeySockets](https://github.com/WhiskeySockets)** — For maintaining and developing Baileys
 - All contributors and the open-source community
 
 ## License
